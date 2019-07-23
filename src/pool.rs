@@ -2,7 +2,7 @@ use crate::{Command, Connection, Result};
 use futures::lock::{Mutex, MutexGuard};
 use std::sync::Arc;
 
-///A connection pool. Clones are very cheap and
+///A connection pool. Clones are cheap and is the expected way to send the pool around te application.
 #[derive(Clone)]
 pub struct Pool {
     connections: Vec<Arc<Mutex<Connection>>>,

@@ -26,7 +26,8 @@ async fn show_posts(mut connection: Connection) {
         let comments = connection
             .lrange(format!("posts.{}.comments", id), 0, 10)
             .await
-            .unwrap().unwrap();
+            .unwrap()
+            .unwrap();
 
         for (number, comment) in comments.iter().enumerate() {
             println!("Comment #{}: {}", number, String::from_utf8_lossy(comment));

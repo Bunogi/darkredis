@@ -255,7 +255,12 @@ impl Connection {
     }
 
     ///Convenience function for the Redis command LRANGE
-    pub async fn lrange<K>(&mut self, key: K, from: isize, to: isize) -> Result<Option<Vec<Vec<u8>>>>
+    pub async fn lrange<K>(
+        &mut self,
+        key: K,
+        from: isize,
+        to: isize,
+    ) -> Result<Option<Vec<Vec<u8>>>>
     where
         K: AsRef<[u8]>,
     {
