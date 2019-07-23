@@ -29,7 +29,7 @@ mod pool;
 #[cfg(test)]
 mod test;
 
-pub use command::Command;
+pub use command::{Command, CommandList};
 pub use connection::Connection;
 pub use error::Error;
 pub use pool::Pool;

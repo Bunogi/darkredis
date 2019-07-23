@@ -1,8 +1,6 @@
 ///The address to connect to when testing
 pub const TEST_ADDRESS: &str = "127.0.0.1:6379";
 
-doc_comment::doctest!("../README.md");
-
 lazy_static::lazy_static! {
     pub static ref CONNECTION_POOL: crate::Pool = futures::executor::block_on(
         crate::Pool::create(TEST_ADDRESS.into(), num_cpus::get())

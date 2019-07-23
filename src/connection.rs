@@ -1,4 +1,4 @@
-use crate::{Command, Error, Result, Value};
+use crate::{Command, CommandList, Error, Result, Value};
 use futures::{lock::Mutex, prelude::*};
 use runtime::net::TcpStream;
 use std::io;
@@ -121,12 +121,11 @@ impl Connection {
         }
     }
 
-    ///Runs a command on this connection, which will be pipelined based on the number of commands
-    ///in `command`.
-    pub async fn run_command(&mut self, command: Command) -> Result<Vec<Value>> {
+    ///Run a series of commands on this connection
+    pub async fn run_commands(&mut self, command: CommandList) -> Result<Vec<Value>> {
         let mut stream = self.stream.lock().await;
         let number_of_commands = command.command_count();
-        let serialized = command.serialize();
+        let serialized: Vec<u8> = command.serialize();
         stream.write_all(&serialized).await?;
 
         let mut results = Vec::with_capacity(number_of_commands);
@@ -135,6 +134,15 @@ impl Connection {
         }
 
         Ok(results)
+    }
+
+    ///Run a single command on this connection
+    pub async fn run_command(&mut self, command: Command) -> Result<Value> {
+        let mut stream = self.stream.lock().await;
+        let serialized: Vec<u8> = command.serialize();
+        stream.write_all(&serialized).await?;
+
+        Ok(Self::read_value(&mut stream).await?)
     }
 
     ///Convenience function for the Redis command SET
@@ -151,7 +159,7 @@ impl Connection {
     ///Convenience function for the Redis command SET, with an expiry time.
     pub async fn set_with_expiry<K, D>(
         &mut self,
-        key: D,
+        key: K,
         data: D,
         expiry: time::Duration,
     ) -> Result<()>
@@ -187,8 +195,6 @@ impl Connection {
         Ok(self
             .run_command(command)
             .await?
-            .pop()
-            .unwrap()
             .optional_string())
     }
 
@@ -203,8 +209,6 @@ impl Connection {
         Ok(self
             .run_command(command)
             .await?
-            .pop()
-            .unwrap()
             .unwrap_integer())
     }
 
@@ -219,8 +223,6 @@ impl Connection {
         Ok(self
             .run_command(command)
             .await?
-            .pop()
-            .unwrap()
             .unwrap_integer())
     }
 
@@ -234,8 +236,6 @@ impl Connection {
         Ok(self
             .run_command(command)
             .await?
-            .pop()
-            .unwrap()
             .optional_string())
     }
 
@@ -249,8 +249,6 @@ impl Connection {
         Ok(self
             .run_command(command)
             .await?
-            .pop()
-            .unwrap()
             .optional_string())
     }
 
@@ -266,33 +264,17 @@ impl Connection {
     {
         let command = Command::new("LRANGE")
             .arg(key.as_ref())
-            .arg(from.to_string().as_ref())
-            .arg(&to.to_string().as_ref());
+            .arg(&from.to_string())
+            .arg(&to.to_string());
 
-        match self.run_command(command).await?.pop().unwrap() {
+        match self.run_command(command).await? {
             Value::Array(a) => Ok(Some(a.into_iter().map(|e| e.unwrap_string()).collect())),
             Value::Nil => Ok(None),
             _ => unreachable!(),
         }
     }
 
-    ///Convenience function for the Redis command RRANGE
-    pub async fn rrange<K>(&mut self, key: K, from: isize, to: isize) -> Result<Vec<Vec<u8>>>
-    where
-        K: AsRef<[u8]>,
-    {
-        let command = Command::new("RRANGE")
-            .arg(key.as_ref())
-            .arg(from.to_string().as_ref())
-            .arg(&to.to_string().as_ref());
-
-        match self.run_command(command).await?.pop().unwrap() {
-            Value::Array(a) => Ok(a.into_iter().map(|e| e.unwrap_string()).collect()),
-            _ => unreachable!(),
-        }
-    }
-
-    ///Convenience function for the Redis command LRANGE
+    ///Convenience function for the Redis command LLEN
     pub async fn llen<K>(&mut self, key: K) -> Result<Option<isize>>
     where
         K: AsRef<[u8]>,
@@ -301,8 +283,6 @@ impl Connection {
         Ok(self
             .run_command(command)
             .await?
-            .pop()
-            .unwrap()
             .optional_integer())
     }
 }
@@ -318,7 +298,7 @@ mod test {
             {
                 let command = Command::new("GET").arg(&null_key);
 
-                assert_eq!(redis.run_command(command).await.unwrap(), vec![Value::Nil]);
+                assert_eq!(redis.run_command(command).await.unwrap(), Value::Nil);
             },
             null_key
         );
@@ -330,7 +310,7 @@ mod test {
             {
                 let command = Command::new("SET").arg(&some_key).arg(b"");
 
-                assert_eq!(redis.run_command(command).await.unwrap(), vec![Value::Ok]);
+                assert_eq!(redis.run_command(command).await.unwrap(), Value::Ok);
             },
             some_key
         );
@@ -340,7 +320,7 @@ mod test {
         redis_test!(
             redis,
             {
-                let command = Command::new("SET")
+                let command = CommandList::new("SET")
                     .arg(&simple_key)
                     .arg(b"")
                     .command("LPUSH")
@@ -351,7 +331,7 @@ mod test {
                     .arg(b"");
 
                 assert_eq!(
-                    redis.run_command(command).await.unwrap(),
+                    redis.run_commands(command).await.unwrap(),
                     vec![Value::Ok, Value::Integer(1), Value::Integer(2)]
                 );
             },

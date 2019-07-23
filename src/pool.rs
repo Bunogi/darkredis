@@ -66,7 +66,7 @@ mod test {
             //If we keep getting the next connection in the queue, the connection pooling is functional
             assert_eq!(
                 conn.run_command(command).await.unwrap(),
-                vec![Value::String(format!("redis-async-{}", i + 1).into_bytes())]
+                Value::String(format!("redis-async-{}", i + 1).into_bytes())
             );
             locks.push(conn);
         }

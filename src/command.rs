@@ -1,4 +1,73 @@
-///A struct for defining commands manually, which also allows for pipelining of several commands.
+///A struct for defining commands manually, which allows for pipelining of several commands. If you need
+///to only run one command, use [`Command`](crate::Command), which has almost the same API.
+///# Example
+/// ```
+///#![feature(async_await)]
+///use redis_async::{CommandList, Connection};
+///# use redis_async::*;
+///# #[runtime::main]
+///# async fn main() {
+///    # let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+///    # connection.del("pipelined-list").await.unwrap();
+///
+///    let command = CommandList::new("LPUSH").arg(b"pipelined-list").arg(b"bar")
+///        .command("LTRIM").arg(b"pipelined-list").arg(b"0").arg(b"100");
+///    let results = connection.run_commands(command).await.unwrap();
+///
+///    assert_eq!(results, vec![Value::Integer(1), Value::Ok]);
+///    # connection.del("pipelined-list").await.unwrap();
+///# }
+/// ```
+pub struct CommandList {
+    commands: Vec<Command>,
+}
+
+impl CommandList {
+    ///Create a new command from `cmd`.
+    pub fn new(cmd: &str) -> Self {
+        let commands = vec![Command::new(cmd)];
+        Self { commands }
+    }
+
+    ///Consumes the command and appends an argument to it. Note that this will NOT create a new
+    ///command for pipelining. That's what `Commandlist::command` is for.
+    pub fn arg<D>(mut self, data: D) -> Self
+    where
+        D: AsRef<[u8]>,
+    {
+        self.commands
+            .last_mut()
+            .unwrap()
+            .args
+            .push(data.as_ref().to_vec());
+        self
+    }
+
+    ///Add a command to be executed in a pipeline. Calls to `Command::arg` will add arguments from
+    ///now on.
+    pub fn command(mut self, cmd: &str) -> Self {
+        self.commands.push(Command::new(cmd));
+        self
+    }
+
+    ///Count the number of commands currently in the pipeline
+    pub fn command_count(&self) -> usize {
+        self.commands.len()
+    }
+
+    //Convert to redis protocol encoding
+    pub(crate) fn serialize(self) -> Vec<u8> {
+        let mut out = Vec::new();
+        for command in self.commands {
+            let mut serialized = command.serialize();
+            out.append(&mut serialized);
+        }
+
+        out
+    }
+}
+
+///A struct for defining commands manually. If you want pipelining, use [`CommandList`](crate::CommandList).
 ///# Example
 /// ```
 ///#![feature(async_await)]
@@ -7,69 +76,55 @@
 ///# #[runtime::main]
 ///# async fn main() {
 ///    # let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
-///    # connection.del("pipelined-list").await.unwrap();
+///    # connection.del("singular-key").await.unwrap();
 ///
-///    let command = Command::new("LPUSH").arg(b"pipelined-list").arg(b"bar")
-///        .command("LTRIM").arg(b"pipelined-list").arg(b"0").arg(b"100");
-///    let results = connection.run_command(command).await.unwrap();
 ///
-///    assert_eq!(results, vec![Value::Integer(1), Value::Ok]);
-///    # connection.del("pipelined-list").await.unwrap();
+///    let command = Command::new("SET").arg(b"singular-key").arg(b"some-value");
+///    let result = connection.run_command(command).await.unwrap();
+///
+///    assert_eq!(result, Value::Ok);
+///    # connection.del("singular-key").await.unwrap();
 ///# }
 /// ```
 pub struct Command {
-    commands: Vec<Vec<Vec<u8>>>,
-    command_count: usize,
+    command: String,
+    args: Vec<Vec<u8>>,
 }
 
 impl Command {
-    ///Create a new command from `cmd`.
+    ///Create a new command.
     pub fn new(cmd: &str) -> Self {
-        let commands = vec![vec![cmd.to_string().into_bytes()]];
         Self {
-            commands,
-            command_count: 1,
+            command: cmd.to_string(),
+            args: Vec::new(),
         }
     }
 
-    ///Consumes the command and appends an argument to it. Note that this will NOT create a new
-    ///command for pipelining. That's what `Command::command` is for.
-    pub fn arg(mut self, bytes: &[u8]) -> Self {
-        self.commands.last_mut().unwrap().push(bytes.to_vec());
+    ///Append an argument to this command.
+    pub fn arg<D>(mut self, data: D) -> Self
+    where
+        D: AsRef<[u8]>,
+    {
+        self.args.push(data.as_ref().to_vec());
         self
     }
 
-    ///Add a command to be executed in a pipeline. Calls to `Command::arg` will add arguments from
-    ///now on.
-    pub fn command(mut self, cmd: &str) -> Self {
-        self.commands.push(vec![cmd.to_string().into_bytes()]);
-        self.command_count += 1;
-        self
-    }
-
-    ///Count the number of commands currently in the pipeline
-    pub fn command_count(&self) -> usize {
-        self.command_count
-    }
-
-    //Convert to redis protocol encoding
     pub(crate) fn serialize(self) -> Vec<u8> {
-        let mut out = Vec::new();
-        for command in self.commands {
-            let mut this_command = format!("*{}\r\n", command.len()).into_bytes();
-            for arg in command {
-                let mut serialized = format!("${}\r\n", arg.len()).into_bytes();
-                for byte in arg {
-                    serialized.push(byte);
-                }
-                serialized.push(b'\r');
-                serialized.push(b'\n');
+        let mut out = format!("*{}\r\n", self.args.len() + 1).into_bytes();
+        let mut serialized_command =
+            format!("${}\r\n{}\r\n", self.command.len(), self.command).into_bytes();
+        out.append(&mut serialized_command);
 
-                this_command.append(&mut serialized);
+        for arg in self.args {
+            let mut serialized = format!("${}\r\n", arg.len()).into_bytes();
+            for byte in arg {
+                serialized.push(byte);
             }
-            out.append(&mut this_command);
-        }
+            serialized.push(b'\r');
+            serialized.push(b'\n');
 
+            out.append(&mut serialized);
+        }
         out
     }
 }
@@ -89,7 +144,7 @@ mod test {
 
     #[test]
     fn serialize_multiple() {
-        let command = Command::new("GET")
+        let command = CommandList::new("GET")
             .arg(b"some-key")
             .command("LLEN")
             .arg(b"some-other-key")
