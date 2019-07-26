@@ -1,10 +1,10 @@
 #![feature(async_await)]
 
-use redis_async::Pool;
+use redis_async::ConnectionPool;
 
 #[runtime::main]
 async fn main() -> redis_async::Result<()> {
-    let pool = Pool::create("127.0.0.1:6379".into(), num_cpus::get()).await?;
+    let pool = ConnectionPool::create("127.0.0.1:6379".into(), num_cpus::get()).await?;
     let mut conn = pool.get().await;
 
     //And away!

@@ -22,9 +22,10 @@ async fn show_posts(mut connection: Connection) {
     for post in posts {
         let post = String::from_utf8_lossy(&post);
         let id = (&post[0..1]).parse::<usize>().unwrap();
+        let comment_key = format!("posts.{}.comments", id);
         println!("Post #{}: {}", id, &post[2..]);
         let comments = connection
-            .lrange(format!("posts.{}.comments", id), 0, 10)
+            .lrange(&comment_key, 0, 10)
             .await
             .unwrap()
             .unwrap();
@@ -33,8 +34,12 @@ async fn show_posts(mut connection: Connection) {
             println!("Comment #{}: {}", number, String::from_utf8_lossy(comment));
         }
 
+        connection.del(comment_key).await.unwrap();
+
         println!();
     }
+
+    connection.del("posts").await.unwrap();
 }
 
 #[runtime::main]

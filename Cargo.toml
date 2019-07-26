@@ -1,8 +1,15 @@
 [package]
 name = "redis-async"
 version = "0.1.1"
-authors = ["Bunogi <2bunogi@gmail.com>"]
+authors = ["Bunogi <haakon.jordet@gmail.com>"]
 edition = "2018"
+
+description = "Async Redis client using std::future"
+publish = false
+license = "zlib"
+readme = "README.md"
+keywords = ["redis", "async", "database"]
+categories = ["database", "web-programming"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

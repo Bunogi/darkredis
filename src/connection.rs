@@ -192,10 +192,7 @@ impl Connection {
     {
         let command = Command::new("GET").arg(key.as_ref());
 
-        Ok(self
-            .run_command(command)
-            .await?
-            .optional_string())
+        Ok(self.run_command(command).await?.optional_string())
     }
 
     ///Convenience function for the Redis command LPUSH
@@ -206,10 +203,7 @@ impl Connection {
     {
         let command = Command::new("LPUSH").arg(key.as_ref()).arg(data.as_ref());
 
-        Ok(self
-            .run_command(command)
-            .await?
-            .unwrap_integer())
+        Ok(self.run_command(command).await?.unwrap_integer())
     }
 
     ///Convenience function for the Redis command RPUSH
@@ -220,10 +214,7 @@ impl Connection {
     {
         let command = Command::new("RPUSH").arg(key.as_ref()).arg(data.as_ref());
 
-        Ok(self
-            .run_command(command)
-            .await?
-            .unwrap_integer())
+        Ok(self.run_command(command).await?.unwrap_integer())
     }
 
     ///Convenience function for the Redis command LPOP
@@ -233,10 +224,7 @@ impl Connection {
     {
         let command = Command::new("LPOP").arg(key.as_ref());
 
-        Ok(self
-            .run_command(command)
-            .await?
-            .optional_string())
+        Ok(self.run_command(command).await?.optional_string())
     }
 
     ///Convenience function for the Redis command RPOP
@@ -246,10 +234,7 @@ impl Connection {
     {
         let command = Command::new("RPOP").arg(key.as_ref());
 
-        Ok(self
-            .run_command(command)
-            .await?
-            .optional_string())
+        Ok(self.run_command(command).await?.optional_string())
     }
 
     ///Convenience function for the Redis command LRANGE
@@ -280,10 +265,7 @@ impl Connection {
         K: AsRef<[u8]>,
     {
         let command = Command::new("LLEN").arg(key.as_ref());
-        Ok(self
-            .run_command(command)
-            .await?
-            .optional_integer())
+        Ok(self.run_command(command).await?.optional_integer())
     }
 }
 

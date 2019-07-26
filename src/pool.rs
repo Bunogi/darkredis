@@ -4,12 +4,12 @@ use std::sync::Arc;
 
 ///A connection pool. Clones are cheap and is the expected way to send the pool around te application.
 #[derive(Clone)]
-pub struct Pool {
+pub struct ConnectionPool {
     connections: Vec<Arc<Mutex<Connection>>>,
     address: Arc<String>,
 }
 
-impl Pool {
+impl ConnectionPool {
     ///Create a new connection pool for `address`, with `connection_count` connections. All connections
     ///are created in this function, and depending on the amount of connections desired, can therefore
     ///take some time to complete.
@@ -56,7 +56,7 @@ mod test {
     #[runtime::test]
     async fn pooling() {
         let connections = 4; //Arbitrary number, must be bigger than 1
-        let pool = Pool::create(crate::test::TEST_ADDRESS.into(), connections)
+        let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), connections)
             .await
             .unwrap();
         let mut locks = Vec::with_capacity(connections);

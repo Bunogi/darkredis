@@ -9,7 +9,7 @@
 //! # #[runtime::main]
 //! # async fn main() {
 //! // Create a connection pool with 4 connections
-//! let pool = Pool::create("127.0.0.1:6379".into(), 4).await.unwrap();
+//! let pool = ConnectionPool::create("127.0.0.1:6379".into(), 4).await.unwrap();
 //! let mut connection = pool.get().await; // Grab a connection from the pool
 //!
 //! connection.set("some-key", "Hello, world!").await.unwrap();
@@ -32,7 +32,7 @@ mod test;
 pub use command::{Command, CommandList};
 pub use connection::Connection;
 pub use error::Error;
-pub use pool::Pool;
+pub use pool::ConnectionPool;
 
 ///Result type used in the whole crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -53,7 +53,9 @@ pub enum Value {
 }
 
 impl Value {
-    ///Returns the inner `isize` of a `Value::Integer``, panicking if the value is not an integer.
+    ///Returns the inner `isize` of a [`Value::Integer`](crate::Value::Integer).
+    ///# Panics
+    ///Panics if `self` is not a [`Value::Integer`](crate::Value::Integer)
     #[inline]
     pub fn unwrap_integer(self) -> isize {
         if let Value::Integer(i) = self {
@@ -63,7 +65,9 @@ impl Value {
         }
     }
 
-    ///Returns the inner `Vec<Value>` of a `Value::Array`, panicking if the value is not an array.
+    ///Returns the inner `Vec<Value>` of a `Value::Array`.
+    ///# Panics
+    ///Panics if `self` is not a [`Value::Array`](crate::Value::Array)
     #[inline]
     pub fn unwrap_array(self) -> Vec<Value> {
         if let Value::Array(a) = self {
@@ -73,7 +77,9 @@ impl Value {
         }
     }
 
-    ///Returns the inner `Vec<u8>` of a `Value::String`, panicking if the value is not a string.
+    ///Returns the inner `Vec<u8>` of a [`Value::String`](crate::Value::String).
+    ///# Panics
+    ///Panics if `self` is not a [`Value::String`](crate::Value::String)
     #[inline]
     pub fn unwrap_string(self) -> Vec<u8> {
         if let Value::String(s) = self {
