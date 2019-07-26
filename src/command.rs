@@ -3,8 +3,8 @@
 ///# Example
 /// ```
 ///#![feature(async_await)]
-///use redis_async::{CommandList, Connection};
-///# use redis_async::*;
+///use darkredis::{CommandList, Connection};
+///# use darkredis::*;
 ///# #[runtime::main]
 ///# async fn main() {
 ///    # let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
@@ -71,8 +71,8 @@ impl CommandList {
 ///# Example
 /// ```
 ///#![feature(async_await)]
-///use redis_async::{Command, Connection};
-///# use redis_async::*;
+///use darkredis::{Command, Connection};
+///# use darkredis::*;
 ///# #[runtime::main]
 ///# async fn main() {
 ///    # let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();

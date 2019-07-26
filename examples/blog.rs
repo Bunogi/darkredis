@@ -1,7 +1,7 @@
 #![feature(async_await)]
 
 use futures::stream::{self, StreamExt};
-use redis_async::Connection;
+use darkredis::Connection;
 
 async fn add_comment(mut connection: Connection, post: usize, text: &str) {
     let key = format!("posts.{}.comments", post);

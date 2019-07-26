@@ -8,7 +8,7 @@ quick_error! {
         }
         ///Failed to connect to Redis.
         ConnectionFailed(err: std::io::Error) {}
-        ///Received an invalid or unexpected response. If you receive this error, it is probably a bug in redis-async.
+        ///Received an invalid or unexpected response. If you receive this error, it is probably a bug in darkredis.
         UnexpectedResponse(got: String) {
             display("Unexpected Redis response \"{}\"", got)
         }

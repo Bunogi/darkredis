@@ -30,7 +30,7 @@ macro_rules! cleanup_keys {
 macro_rules! create_key {
     ($name:ident) => {
         format!(
-            "redis-async.test.{}.{}.{}",
+            "darkredis.test.{}.{}.{}",
             file!(),
             line!(),
             stringify!($name)

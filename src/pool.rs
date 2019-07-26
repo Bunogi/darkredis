@@ -25,7 +25,7 @@ impl ConnectionPool {
             conn.run_command(
                 Command::new("CLIENT")
                     .arg(b"SETNAME")
-                    .arg(&format!("redis-async-{}", i + 1).into_bytes()),
+                    .arg(&format!("darkredis-{}", i + 1).into_bytes()),
             )
             .await?;
             out.connections.push(Arc::new(Mutex::new(conn)));
@@ -66,7 +66,7 @@ mod test {
             //If we keep getting the next connection in the queue, the connection pooling is functional
             assert_eq!(
                 conn.run_command(command).await.unwrap(),
-                Value::String(format!("redis-async-{}", i + 1).into_bytes())
+                Value::String(format!("darkredis-{}", i + 1).into_bytes())
             );
             locks.push(conn);
         }

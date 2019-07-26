@@ -4,7 +4,7 @@
 //! Asyncronous redis client built using futures and async await, with optional connection pooling.
 //! ```
 //! #![feature(async_await)]
-//! use redis_async::*;
+//! use darkredis::*;
 //!
 //! # #[runtime::main]
 //! # async fn main() {

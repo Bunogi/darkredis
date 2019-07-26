@@ -1,9 +1,9 @@
 #![feature(async_await)]
 
-use redis_async::ConnectionPool;
+use darkredis::ConnectionPool;
 
 #[runtime::main]
-async fn main() -> redis_async::Result<()> {
+async fn main() -> darkredis::Result<()> {
     let pool = ConnectionPool::create("127.0.0.1:6379".into(), num_cpus::get()).await?;
     let mut conn = pool.get().await;
 

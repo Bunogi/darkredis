@@ -1,5 +1,5 @@
 [package]
-name = "redis-async"
+name = "darkredis"
 version = "0.1.1"
 authors = ["Bunogi <haakon.jordet@gmail.com>"]
 edition = "2018"
@@ -9,7 +9,7 @@ license = "Zlib"
 readme = "README.md"
 keywords = ["redis", "async", "database"]
 categories = ["database", "web-programming"]
-repository = "https://github.com/Bunogi/redis-async"
+repository = "https://github.com/Bunogi/darkredis"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
