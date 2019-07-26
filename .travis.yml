@@ -1,0 +1,7 @@
+language: rust
+rust:
+  - nightly
+services:
+  - redis-server
+script:
+  - cargo test

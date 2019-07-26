@@ -1,4 +1,4 @@
-# redis-async : A Redis client based on `std::future` and async await
+# redis-async : A Redis client based on `std::future` and async await [![Build Status](https://travis-ci.org/Bunogi/redis-async.svg?branch=master)](https://travis-ci.org/Bunogi/redis-async)
 `redis-async` is a Redis client for Rust written using the new `std::future` and `async` await. Currently nightly only, the library tries to be ergonomic and easy to use.
 
 Currently not all Redis commands have convenience functions, and there may be ergonomic improvements to make. If connecting to Redis over a network, the
