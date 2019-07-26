@@ -5,7 +5,7 @@ authors = ["Bunogi <haakon.jordet@gmail.com>"]
 edition = "2018"
 
 description = "Async Redis client using std::future"
-license = "zlib"
+license = "Zlib"
 readme = "README.md"
 keywords = ["redis", "async", "database"]
 categories = ["database", "web-programming"]
