@@ -1,4 +1,6 @@
-# darkredis : A Redis client based on `std::future` and async await [![Build Status](https://travis-ci.org/Bunogi/darkredis.svg?branch=master)](https://travis-ci.org/Bunogi/darkredis)
+# darkredis : A Redis client based on `std::future` and async await
+[![Build Status](https://travis-ci.org/Bunogi/darkredis.svg?branch=master)](https://travis-ci.org/Bunogi/darkredis) [![Crates.io Status](https://img.shields.io/crates/v/darkredis.svg)](https://crates.io/crates/darkredis)
+
 `darkredis` is a Redis client for Rust written using the new `std::future` and `async` await. Currently nightly only, the library tries to be ergonomic and easy to use.
 
 Currently not all Redis commands have convenience functions, and there may be ergonomic improvements to make.
@@ -17,7 +19,7 @@ There are other Redis clients out there for Rust, but none of them allow you to 
 use darkredis::ConnectionPool;
 
 #[runtime::main]
-async fn main() -> redis_async::Result<()> {
+async fn main() -> darkredis::Result<()> {
     let pool = ConnectionPool::create("127.0.0.1:6379".into(), num_cpus::get()).await?;
     let mut conn = pool.get().await;
 
