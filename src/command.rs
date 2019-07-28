@@ -7,15 +7,15 @@
 ///# use darkredis::*;
 ///# #[runtime::main]
 ///# async fn main() {
-///    # let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
-///    # connection.del("pipelined-list").await.unwrap();
+///# let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+///# connection.del("pipelined-list").await.unwrap();
 ///
-///    let command = CommandList::new("LPUSH").arg(b"pipelined-list").arg(b"bar")
-///        .command("LTRIM").arg(b"pipelined-list").arg(b"0").arg(b"100");
-///    let results = connection.run_commands(command).await.unwrap();
+/// let command = CommandList::new("LPUSH").arg(b"pipelined-list").arg(b"bar")
+///     .command("LTRIM").arg(b"pipelined-list").arg(b"0").arg(b"100");
+/// let results = connection.run_commands(command).await.unwrap();
 ///
-///    assert_eq!(results, vec![Value::Integer(1), Value::Ok]);
-///    # connection.del("pipelined-list").await.unwrap();
+/// assert_eq!(results, vec![Value::Integer(1), Value::Ok]);
+///# connection.del("pipelined-list").await.unwrap();
 ///# }
 /// ```
 pub struct CommandList {
@@ -75,15 +75,14 @@ impl CommandList {
 ///# use darkredis::*;
 ///# #[runtime::main]
 ///# async fn main() {
-///    # let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
-///    # connection.del("singular-key").await.unwrap();
+///# let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+///# connection.del("singular-key").await.unwrap();
 ///
+///let command = Command::new("SET").arg(b"singular-key").arg(b"some-value");
+///let result = connection.run_command(command).await.unwrap();
 ///
-///    let command = Command::new("SET").arg(b"singular-key").arg(b"some-value");
-///    let result = connection.run_command(command).await.unwrap();
-///
-///    assert_eq!(result, Value::Ok);
-///    # connection.del("singular-key").await.unwrap();
+///assert_eq!(result, Value::Ok);
+///# connection.del("singular-key").await.unwrap();
 ///# }
 /// ```
 pub struct Command {

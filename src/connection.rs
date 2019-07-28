@@ -19,7 +19,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 }
 
 ///A connection to Redis. Copying is cheap as the inner type is a simple, futures-aware, `Arc<Mutex>`, and will
-///not create a new connection. Use a [`Pool`](crate::Pool) if you want to use pooled conections.
+///not create a new connection. Use a [`Pool`](crate::ConnectionPool) if you want to use pooled conections.
 #[derive(Clone)]
 pub struct Connection {
     stream: Arc<Mutex<TcpStream>>,
