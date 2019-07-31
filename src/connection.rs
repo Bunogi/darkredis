@@ -218,7 +218,7 @@ impl Connection {
     }
 
     ///Convenience function for the Redis command LPOP
-    pub async fn lpop<K, D>(&mut self, key: K) -> Result<Option<Vec<u8>>>
+    pub async fn lpop<K>(&mut self, key: K) -> Result<Option<Vec<u8>>>
     where
         K: AsRef<[u8]>,
     {
@@ -228,7 +228,7 @@ impl Connection {
     }
 
     ///Convenience function for the Redis command RPOP
-    pub async fn rpop<K, D>(&mut self, key: K) -> Result<Option<Vec<u8>>>
+    pub async fn rpop<K>(&mut self, key: K) -> Result<Option<Vec<u8>>>
     where
         K: AsRef<[u8]>,
     {
@@ -331,6 +331,25 @@ mod test {
                 assert_eq!(redis.get(&key).await.unwrap(), Some("foo".into()));
             },
             key
+        );
+    }
+
+    #[runtime::test]
+    async fn list_convenience() {
+        redis_test!(
+            redis,
+            {
+                redis.rpush(&list_key, "1").await.unwrap();
+                redis.rpush(&list_key, "2").await.unwrap();
+                redis.lpush(&list_key, "0").await.unwrap();
+
+                let expected: Vec<Vec<u8>> = vec![b"0", b"1", b"2"].into_iter().map(|s| s.to_vec()).collect();
+                assert_eq!(redis.lrange(&list_key, 0, 3).await.unwrap(), Some(expected));
+                assert_eq!(redis.lpop(&list_key).await.unwrap(), Some(b"0".to_vec()));
+                assert_eq!(redis.rpop(&list_key).await.unwrap(), Some(b"2".to_vec()));
+                assert_eq!(redis.llen(&list_key).await.unwrap(), Some(1));
+            },
+            list_key
         );
     }
 }
