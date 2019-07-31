@@ -22,12 +22,9 @@ impl ConnectionPool {
 
         for i in 0..connection_count {
             let mut conn = Connection::connect(out.address.as_ref()).await?;
-            conn.run_command(
-                Command::new("CLIENT")
-                    .arg(b"SETNAME")
-                    .arg(&format!("darkredis-{}", i + 1).into_bytes()),
-            )
-            .await?;
+            let client_name = format!("darkredis-{}", i + 1);
+            conn.run_command(Command::new("CLIENT").arg(b"SETNAME").arg(&client_name))
+                .await?;
             out.connections.push(Arc::new(Mutex::new(conn)));
         }
 

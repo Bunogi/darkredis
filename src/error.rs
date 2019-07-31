@@ -1,8 +1,8 @@
 quick_error! {
-    ///General error.
+    ///The `darkredis` error type.
     #[derive(Debug)]
     pub enum Error {
-        ///An io error occured.
+        ///An io error occured trying to write or read from a TCP socket.
         Io(err: std::io::Error) {
             from()
         }
@@ -18,12 +18,3 @@ quick_error! {
         }
     }
 }
-
-// quick_error! {
-//     #[derive(Debug)]
-//     pub enum ConversionError {
-//         WrongType(expected: String, received: String) {
-//             display("Expected type '{}' but found '{}", expected, received)
-//         }
-//     }
-// }

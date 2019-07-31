@@ -18,34 +18,42 @@
 ///# connection.del("pipelined-list").await.unwrap();
 ///# }
 /// ```
-pub struct CommandList {
-    commands: Vec<Command>,
+pub struct CommandList<'a> {
+    commands: Vec<Command<'a>>,
 }
 
-impl CommandList {
+impl<'a> CommandList<'a> {
     ///Create a new command from `cmd`.
-    pub fn new(cmd: &str) -> Self {
+    pub fn new(cmd: &'a str) -> Self {
         let commands = vec![Command::new(cmd)];
         Self { commands }
     }
 
     ///Consumes the command and appends an argument to it. Note that this will NOT create a new
-    ///command for pipelining. That's what `Commandlist::command` is for.
-    pub fn arg<D>(mut self, data: D) -> Self
+    ///command for pipelining. That's what [`Commandlist::command`](crate::CommandList::command) is for.
+    pub fn arg<D>(mut self, data: &'a D) -> Self
     where
         D: AsRef<[u8]>,
     {
-        self.commands
-            .last_mut()
-            .unwrap()
-            .args
-            .push(data.as_ref().to_vec());
+        self.commands.last_mut().unwrap().args.push(data.as_ref());
+        self
+    }
+
+    ///Add multiple arguments from a slice.
+    pub fn args<D>(mut self, arguments: &'a [D]) -> Self
+    where
+        D: AsRef<[u8]>,
+    {
+        let last_command = self.commands.last_mut().unwrap();
+        for arg in arguments {
+            last_command.args.push(arg.as_ref());
+        }
         self
     }
 
     ///Add a command to be executed in a pipeline. Calls to `Command::arg` will add arguments from
     ///now on.
-    pub fn command(mut self, cmd: &str) -> Self {
+    pub fn command(mut self, cmd: &'a str) -> Self {
         self.commands.push(Command::new(cmd));
         self
     }
@@ -85,26 +93,38 @@ impl CommandList {
 ///# connection.del("singular-key").await.unwrap();
 ///# }
 /// ```
-pub struct Command {
-    command: String,
-    args: Vec<Vec<u8>>,
+pub struct Command<'a> {
+    command: &'a str,
+    args: Vec<&'a [u8]>,
 }
 
-impl Command {
-    ///Create a new command.
-    pub fn new(cmd: &str) -> Self {
+impl<'a> Command<'a> {
+    ///Create a new a.
+    pub fn new(cmd: &'a str) -> Self {
         Self {
-            command: cmd.to_string(),
+            command: cmd,
             args: Vec::new(),
         }
     }
 
     ///Append an argument to this command.
-    pub fn arg<D>(mut self, data: D) -> Self
+    pub fn arg<D>(mut self, data: &'a D) -> Self
     where
         D: AsRef<[u8]>,
     {
-        self.args.push(data.as_ref().to_vec());
+        self.args.push(data.as_ref());
+        self
+    }
+
+    ///Add multiple arguments to a command in slice form.
+    pub fn args<D>(mut self, arguments: &'a [D]) -> Self
+    where
+        D: AsRef<[u8]>,
+    {
+        for arg in arguments {
+            self.args.push(arg.as_ref());
+        }
+
         self
     }
 
@@ -117,7 +137,7 @@ impl Command {
         for arg in self.args {
             let mut serialized = format!("${}\r\n", arg.len()).into_bytes();
             for byte in arg {
-                serialized.push(byte);
+                serialized.push(*byte);
             }
             serialized.push(b'\r');
             serialized.push(b'\n');
@@ -151,6 +171,19 @@ mod test {
         assert_eq!(
             String::from_utf8_lossy(&command),
             "*2\r\n$3\r\nGET\r\n$8\r\nsome-key\r\n*2\r\n$4\r\nLLEN\r\n$14\r\nsome-other-key\r\n"
+        );
+    }
+
+    #[test]
+    fn multiple_args() {
+        let arguments = vec!["a", "b", "c"];
+        let command = Command::new("LPUSH")
+            .arg(b"some-key")
+            .args(&arguments)
+            .serialize();
+        assert_eq!(
+            String::from_utf8_lossy(&command),
+            "*5\r\n$5\r\nLPUSH\r\n$8\r\nsome-key\r\n$1\r\na\r\n$1\r\nb\r\n$1\r\nc\r\n"
         );
     }
 }

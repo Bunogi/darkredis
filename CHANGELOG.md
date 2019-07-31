@@ -1,3 +1,8 @@
+# 0.2.0
+- Command and CommandList no longer perform any copies
+- Added args method to Command and CommandList
+- `lpush` and `rpush` now take multiple arguments
+- Add convenience functions for the following commands: `lset`, `ltrim`
 # 0.1.3
 - Remove unnecesarry generic parameter from lpop and rpop methods.
 # 0.1.2

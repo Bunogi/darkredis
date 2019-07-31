@@ -1,19 +1,16 @@
 #![feature(async_await)]
 
-use futures::stream::{self, StreamExt};
 use darkredis::Connection;
 
-async fn add_comment(mut connection: Connection, post: usize, text: &str) {
+async fn add_comments(mut connection: Connection, post: usize, comments: Vec<&str>) {
     let key = format!("posts.{}.comments", post);
-    connection.rpush(&key, text).await.unwrap();
+    connection.rpush_slice(&key, &comments).await.unwrap();
 }
 
 async fn add_post(mut connection: Connection, postid: usize, text: &str) {
     let key = "posts";
-    connection
-        .rpush(&key, format!("{}\n{}", postid, text))
-        .await
-        .unwrap();
+    let post = format!("{}\n{}", postid, text);
+    connection.rpush(&key, post).await.unwrap();
 }
 
 async fn show_posts(mut connection: Connection) {
@@ -48,19 +45,17 @@ async fn main() {
 
     //Write some posts
     let first_post = "My first ever blog post!";
+    let first_comments = vec!["Cool!", "Nice!", "I'm excited!"];
     add_post(connection.clone(), 1, first_post).await;
-    stream::iter(vec!["Cool!", "Nice!", "I'm excited!"])
-        .for_each(|comment| add_comment(connection.clone(), 1, comment))
-        .await;
+    add_comments(connection.clone(), 1, first_comments).await;
 
     let second_post = "Blogging is hard work!";
     add_post(connection.clone(), 2, second_post).await;
 
     let last_post = "My last ever blog post...";
+    let last_comments = vec!["Sad to see you go, you were good.", "It's not fair!"];
     add_post(connection.clone(), 3, last_post).await;
-    stream::iter(vec!["Sad to see you go, you were good.", "It's not fair!"])
-        .for_each(|comment| add_comment(connection.clone(), 3, comment))
-        .await;
+    add_comments(connection.clone(), 3, last_comments).await;
 
     show_posts(connection).await;
 }

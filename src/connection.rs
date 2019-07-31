@@ -19,7 +19,8 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 }
 
 ///A connection to Redis. Copying is cheap as the inner type is a simple, futures-aware, `Arc<Mutex>`, and will
-///not create a new connection. Use a [`Pool`](crate::ConnectionPool) if you want to use pooled conections.
+///not create a new connection. Use a [`ConnectionPool`](crate::ConnectionPool) if you want to use pooled conections.
+///Every convenience function can work with any kind of data as long as it can be converted into bytes.
 #[derive(Clone)]
 pub struct Connection {
     stream: Arc<Mutex<TcpStream>>,
@@ -122,7 +123,7 @@ impl Connection {
     }
 
     ///Run a series of commands on this connection
-    pub async fn run_commands(&mut self, command: CommandList) -> Result<Vec<Value>> {
+    pub async fn run_commands(&mut self, command: CommandList<'_>) -> Result<Vec<Value>> {
         let mut stream = self.stream.lock().await;
         let number_of_commands = command.command_count();
         let serialized: Vec<u8> = command.serialize();
@@ -137,7 +138,7 @@ impl Connection {
     }
 
     ///Run a single command on this connection
-    pub async fn run_command(&mut self, command: Command) -> Result<Value> {
+    pub async fn run_command(&mut self, command: Command<'_>) -> Result<Value> {
         let mut stream = self.stream.lock().await;
         let serialized: Vec<u8> = command.serialize();
         stream.write_all(&serialized).await?;
@@ -151,7 +152,7 @@ impl Connection {
         K: AsRef<[u8]>,
         D: AsRef<[u8]>,
     {
-        let command = Command::new("SET").arg(key.as_ref()).arg(data.as_ref());
+        let command = Command::new("SET").arg(&key).arg(&data);
 
         self.run_command(command).await.map(|_| ())
     }
@@ -167,11 +168,12 @@ impl Connection {
         K: AsRef<[u8]>,
         D: AsRef<[u8]>,
     {
+        let expiry = expiry.as_secs().to_string();
         let command = Command::new("SET")
-            .arg(key.as_ref())
-            .arg(data.as_ref())
+            .arg(&key)
+            .arg(&data)
             .arg(b"EX")
-            .arg(expiry.as_secs().to_string().as_bytes());
+            .arg(&expiry);
 
         self.run_command(command).await.map(|_| ())
     }
@@ -181,7 +183,7 @@ impl Connection {
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("DEL").arg(key.as_ref());
+        let command = Command::new("DEL").arg(&key);
         self.run_command(command).await.map(|_| ())
     }
 
@@ -190,7 +192,7 @@ impl Connection {
     where
         D: AsRef<[u8]>,
     {
-        let command = Command::new("GET").arg(key.as_ref());
+        let command = Command::new("GET").arg(&key);
 
         Ok(self.run_command(command).await?.optional_string())
     }
@@ -201,7 +203,18 @@ impl Connection {
         K: AsRef<[u8]>,
         D: AsRef<[u8]>,
     {
-        let command = Command::new("LPUSH").arg(key.as_ref()).arg(data.as_ref());
+        let command = Command::new("LPUSH").arg(&key).arg(&data);
+
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Like lpush, but push multiple values through a slice
+    pub async fn lpush_slice<K, D>(&mut self, key: K, data: &[D]) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        D: AsRef<[u8]>,
+    {
+        let command = Command::new("LPUSH").arg(&key).args(data);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
@@ -212,7 +225,18 @@ impl Connection {
         K: AsRef<[u8]>,
         D: AsRef<[u8]>,
     {
-        let command = Command::new("RPUSH").arg(key.as_ref()).arg(data.as_ref());
+        let command = Command::new("RPUSH").arg(&key).arg(&data);
+
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Like rpush, but push multiple values through a slice
+    pub async fn rpush_slice<K, D>(&mut self, key: K, data: &[D]) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        D: AsRef<[u8]>,
+    {
+        let command = Command::new("RPUSH").arg(&key).args(data);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
@@ -222,7 +246,7 @@ impl Connection {
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("LPOP").arg(key.as_ref());
+        let command = Command::new("LPOP").arg(&key);
 
         Ok(self.run_command(command).await?.optional_string())
     }
@@ -232,7 +256,7 @@ impl Connection {
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("RPOP").arg(key.as_ref());
+        let command = Command::new("RPOP").arg(&key);
 
         Ok(self.run_command(command).await?.optional_string())
     }
@@ -247,10 +271,9 @@ impl Connection {
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("LRANGE")
-            .arg(key.as_ref())
-            .arg(&from.to_string())
-            .arg(&to.to_string());
+        let from = from.to_string();
+        let to = to.to_string();
+        let command = Command::new("LRANGE").arg(&key).arg(&from).arg(&to);
 
         match self.run_command(command).await? {
             Value::Array(a) => Ok(Some(a.into_iter().map(|e| e.unwrap_string()).collect())),
@@ -264,8 +287,34 @@ impl Connection {
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("LLEN").arg(key.as_ref());
+        let command = Command::new("LLEN").arg(&key);
         Ok(self.run_command(command).await?.optional_integer())
+    }
+
+    ///Convenience function for LSET.
+    pub async fn lset<K, D>(&mut self, key: K, index: usize, value: D) -> Result<()>
+    where
+        K: AsRef<[u8]>,
+        D: AsRef<[u8]>,
+    {
+        let index = index.to_string();
+        let command = Command::new("LSET").arg(&key).arg(&index).arg(&value);
+
+        self.run_command(command).await?;
+        Ok(())
+    }
+
+    ///Convenience function for LTRIM
+    pub async fn ltrim<K>(&mut self, key: K, start: usize, stop: usize) -> Result<()>
+    where
+        K: AsRef<[u8]>,
+    {
+        let start = start.to_string();
+        let stop = stop.to_string();
+        let command = Command::new("LTRIM").arg(&key).arg(&start).arg(&stop);
+        self.run_command(command).await?;
+
+        Ok(())
     }
 }
 
@@ -339,15 +388,23 @@ mod test {
         redis_test!(
             redis,
             {
-                redis.rpush(&list_key, "1").await.unwrap();
-                redis.rpush(&list_key, "2").await.unwrap();
+                redis.rpush_slice(&list_key, &["1", "2"]).await.unwrap();
                 redis.lpush(&list_key, "0").await.unwrap();
 
-                let expected: Vec<Vec<u8>> = vec![b"0", b"1", b"2"].into_iter().map(|s| s.to_vec()).collect();
+                let expected: Vec<Vec<u8>> = vec![b"0", b"1", b"2"]
+                    .into_iter()
+                    .map(|s| s.to_vec())
+                    .collect();
                 assert_eq!(redis.lrange(&list_key, 0, 3).await.unwrap(), Some(expected));
                 assert_eq!(redis.lpop(&list_key).await.unwrap(), Some(b"0".to_vec()));
                 assert_eq!(redis.rpop(&list_key).await.unwrap(), Some(b"2".to_vec()));
                 assert_eq!(redis.llen(&list_key).await.unwrap(), Some(1));
+
+                let long_list: Vec<String> =
+                    std::iter::repeat("value".to_string()).take(10).collect();
+                redis.lpush_slice(&list_key, &long_list).await.unwrap();
+                redis.ltrim(&list_key, 0, 4).await.unwrap();
+                assert_eq!(redis.llen(&list_key).await.unwrap(), Some(5));
             },
             list_key
         );
