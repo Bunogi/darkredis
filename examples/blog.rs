@@ -41,7 +41,7 @@ async fn show_posts(mut connection: Connection) {
 
 #[runtime::main]
 async fn main() {
-    let connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+    let connection = Connection::connect("127.0.0.1:6379", None).await.unwrap();
 
     //Write some posts
     let first_post = "My first ever blog post!";

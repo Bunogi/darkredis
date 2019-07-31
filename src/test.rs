@@ -3,7 +3,7 @@ pub const TEST_ADDRESS: &str = "127.0.0.1:6379";
 
 lazy_static::lazy_static! {
     pub static ref CONNECTION_POOL: crate::ConnectionPool = futures::executor::block_on(
-        crate::ConnectionPool::create(TEST_ADDRESS.into(), num_cpus::get())
+        crate::ConnectionPool::create(TEST_ADDRESS.into(), None, num_cpus::get())
     ).unwrap();
 }
 

@@ -13,7 +13,7 @@ impl ConnectionPool {
     ///Create a new connection pool for `address`, with `connection_count` connections. All connections
     ///are created in this function, and depending on the amount of connections desired, can therefore
     ///take some time to complete.
-    pub async fn create(address: String, connection_count: usize) -> Result<Self> {
+    pub async fn create(address: String, password: Option<&str>, connection_count: usize) -> Result<Self> {
         let connections = Vec::new();
         let mut out = Self {
             connections,
@@ -21,7 +21,7 @@ impl ConnectionPool {
         };
 
         for i in 0..connection_count {
-            let mut conn = Connection::connect(out.address.as_ref()).await?;
+            let mut conn = Connection::connect(out.address.as_ref(), password).await?;
             let client_name = format!("darkredis-{}", i + 1);
             conn.run_command(Command::new("CLIENT").arg(b"SETNAME").arg(&client_name))
                 .await?;
@@ -53,7 +53,7 @@ mod test {
     #[runtime::test]
     async fn pooling() {
         let connections = 4; //Arbitrary number, must be bigger than 1
-        let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), connections)
+        let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), None, connections)
             .await
             .unwrap();
         let mut locks = Vec::with_capacity(connections);

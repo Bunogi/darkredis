@@ -9,7 +9,7 @@
 //! # #[runtime::main]
 //! # async fn main() {
 //! // Create a connection pool with 4 connections
-//! let pool = ConnectionPool::create("127.0.0.1:6379".into(), 4).await.unwrap();
+//! let pool = ConnectionPool::create("127.0.0.1:6379".into(), None, 4).await.unwrap();
 //! let mut connection = pool.get().await; // Grab a connection from the pool
 //!
 //! connection.set("some-key", "Hello, world!").await.unwrap();
@@ -23,16 +23,16 @@ extern crate quick_error;
 
 mod command;
 mod connection;
+mod connectionpool;
 mod error;
-mod pool;
 
 #[cfg(test)]
 mod test;
 
 pub use command::{Command, CommandList};
 pub use connection::Connection;
+pub use connectionpool::ConnectionPool;
 pub use error::Error;
-pub use pool::ConnectionPool;
 
 ///Result type used in the whole crate.
 pub type Result<T> = std::result::Result<T, Error>;

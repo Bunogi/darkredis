@@ -28,7 +28,7 @@ pub struct Connection {
 
 impl Connection {
     ///Connect to a Redis instance running at `address`.
-    pub async fn connect<A>(address: A) -> Result<Self>
+    pub async fn connect<A>(address: A, password: Option<&str>) -> Result<Self>
     where
         A: net::ToSocketAddrs,
     {
@@ -37,7 +37,13 @@ impl Connection {
                 .await
                 .map_err(Error::ConnectionFailed)?,
         ));
-        Ok(Self { stream })
+        let mut out = Self { stream };
+
+        if let Some(pass) = password {
+            out.run_command(Command::new("AUTH").arg(&pass)).await?;
+        }
+
+        Ok(out)
     }
 
     async fn parse_simple_value(buf: &[u8]) -> Result<Value> {
