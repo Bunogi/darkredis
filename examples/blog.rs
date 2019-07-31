@@ -14,18 +14,14 @@ async fn add_post(mut connection: Connection, postid: usize, text: &str) {
 }
 
 async fn show_posts(mut connection: Connection) {
-    let posts = connection.lrange("posts", 0, 10).await.unwrap().unwrap();
+    let posts = connection.lrange("posts", 0, 10).await.unwrap();
 
     for post in posts {
         let post = String::from_utf8_lossy(&post);
         let id = (&post[0..1]).parse::<usize>().unwrap();
         let comment_key = format!("posts.{}.comments", id);
         println!("Post #{}: {}", id, &post[2..]);
-        let comments = connection
-            .lrange(&comment_key, 0, 10)
-            .await
-            .unwrap()
-            .unwrap();
+        let comments = connection.lrange(&comment_key, 0, 10).await.unwrap();
 
         for (number, comment) in comments.iter().enumerate() {
             println!("Comment #{}: {}", number, String::from_utf8_lossy(comment));

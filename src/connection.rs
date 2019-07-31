@@ -55,14 +55,10 @@ impl Connection {
                     Ok(Value::String(buf[1..].into()))
                 }
             }
-            b'-' => {
-                //TODO: find a way to do this without copying
-                Err(Error::RedisError(
-                    String::from_utf8_lossy(&buf[1..]).to_string(),
-                ))
-            }
+            b'-' => Err(Error::RedisError(
+                String::from_utf8_lossy(&buf[1..]).to_string(),
+            )),
             b':' => {
-                //TODO: find a way to do this without copying
                 let string = String::from_utf8_lossy(&buf[1..]);
                 let num = string.trim().parse::<isize>().unwrap();
                 Ok(Value::Integer(num))
@@ -81,7 +77,7 @@ impl Connection {
                 .trim()
                 .parse::<usize>()
                 .unwrap();
-            let mut buf = vec![0u8; num + 2]; // add two to catch the final \r\n from redis
+            let mut buf = vec![0u8; num + 2]; // add two to catch the final \r\n from Redis
             stream.read_exact(&mut buf).await?;
 
             buf.pop(); //Discard the last \r\n
@@ -268,12 +264,7 @@ impl Connection {
     }
 
     ///Convenience function for the Redis command LRANGE
-    pub async fn lrange<K>(
-        &mut self,
-        key: K,
-        from: isize,
-        to: isize,
-    ) -> Result<Option<Vec<Vec<u8>>>>
+    pub async fn lrange<K>(&mut self, key: K, from: isize, to: isize) -> Result<Vec<Vec<u8>>>
     where
         K: AsRef<[u8]>,
     {
@@ -281,11 +272,13 @@ impl Connection {
         let to = to.to_string();
         let command = Command::new("LRANGE").arg(&key).arg(&from).arg(&to);
 
-        match self.run_command(command).await? {
-            Value::Array(a) => Ok(Some(a.into_iter().map(|e| e.unwrap_string()).collect())),
-            Value::Nil => Ok(None),
-            _ => unreachable!(),
-        }
+        Ok(self
+            .run_command(command)
+            .await?
+            .unwrap_array()
+            .into_iter()
+            .map(|s| s.unwrap_string())
+            .collect())
     }
 
     ///Convenience function for the Redis command LLEN
@@ -401,7 +394,7 @@ mod test {
                     .into_iter()
                     .map(|s| s.to_vec())
                     .collect();
-                assert_eq!(redis.lrange(&list_key, 0, 3).await.unwrap(), Some(expected));
+                assert_eq!(redis.lrange(&list_key, 0, 3).await.unwrap(), expected);
                 assert_eq!(redis.lpop(&list_key).await.unwrap(), Some(b"0".to_vec()));
                 assert_eq!(redis.rpop(&list_key).await.unwrap(), Some(b"2".to_vec()));
                 assert_eq!(redis.llen(&list_key).await.unwrap(), Some(1));
@@ -410,7 +403,9 @@ mod test {
                     std::iter::repeat("value".to_string()).take(10).collect();
                 redis.lpush_slice(&list_key, &long_list).await.unwrap();
                 redis.ltrim(&list_key, 0, 4).await.unwrap();
+                redis.lset(&list_key, 0, b"hello").await.unwrap();
                 assert_eq!(redis.llen(&list_key).await.unwrap(), Some(5));
+                assert_eq!(redis.lrange(&list_key, 0, 0).await.unwrap(), vec![b"hello"]);
             },
             list_key
         );

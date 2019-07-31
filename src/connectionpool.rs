@@ -13,7 +13,11 @@ impl ConnectionPool {
     ///Create a new connection pool for `address`, with `connection_count` connections. All connections
     ///are created in this function, and depending on the amount of connections desired, can therefore
     ///take some time to complete.
-    pub async fn create(address: String, password: Option<&str>, connection_count: usize) -> Result<Self> {
+    pub async fn create(
+        address: String,
+        password: Option<&str>,
+        connection_count: usize,
+    ) -> Result<Self> {
         let connections = Vec::new();
         let mut out = Self {
             connections,

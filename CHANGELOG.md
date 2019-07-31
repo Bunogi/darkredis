@@ -3,6 +3,7 @@
 - Added args method to Command and CommandList
 - `lpush` and `rpush` now take multiple arguments
 - Support password auth
+- `lrange` no longer returns an Option, returns an empty vec instead.
 - Add convenience functions for the following commands: `lset`, `ltrim`
 # 0.1.3
 - Remove unnecesarry generic parameter from lpop and rpop methods.
