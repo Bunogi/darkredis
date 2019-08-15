@@ -37,7 +37,7 @@ impl ConnectionPool {
 
     ///Get an available connection from the pool, or wait for one to become available if none are
     ///available.
-    pub async fn get(&self) -> MutexGuard<Connection> {
+    pub async fn get(&self) -> MutexGuard<'_, Connection> {
         for conn in self.connections.iter() {
             if let Some(lock) = conn.try_lock() {
                 return lock;

@@ -1,3 +1,5 @@
+# 0.2.1
+- Fix compilation error on latest nightly
 # 0.2.0
 - Command and CommandList no longer perform any copies
 - Added args method to Command and CommandList
