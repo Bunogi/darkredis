@@ -1,6 +1,6 @@
 [package]
 name = "darkredis"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Bunogi <haakon.jordet@gmail.com>"]
 edition = "2018"
 publish = false
@@ -15,8 +15,8 @@ repository = "https://github.com/Bunogi/darkredis"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures-preview = "=0.3.0-alpha.17" # alpha.18 pulls in a broken version of futures-timer
-runtime = "0.3.0-alpha.6"
+futures-preview = "0.3.0-alpha.18"
+runtime = "0.3.0-alpha.7"
 quick-error = "1.2.2"
 
 [dev-dependencies]

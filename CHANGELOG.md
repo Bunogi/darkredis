@@ -1,3 +1,5 @@
+# 0.2.2
+- Update dependencies
 # 0.2.1
 - Fix compilation error on latest nightly
 # 0.2.0
