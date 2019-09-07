@@ -10,8 +10,8 @@ Currently not all Redis commands have convenience functions, and there may be er
 There are other Redis clients out there for Rust, but none of them allow you to easily write `await` in your code. `redis-rs` is a good client for sure, but it's async module is based on `futures 0.1`. Therefore, I ripped my custom-written Redis client from an async project of mine. The result of this is `darkredis`, and I hope it will be useful to you, even if only to experiment with async and await.
 
 # Getting started
-- Add `darkredis` and `runtime` to your `Cargo.toml`.
-- Use the runtime crate to bootstrap an async context.
+- Add `darkredis` and to your `Cargo.toml`.
+- Create an async context somehow, for instance by using the `runtime` crate.
 - Create a `ConnectionPool` and grab a connection!
 
 ```rust
@@ -35,6 +35,27 @@ async fn main() -> darkredis::Result<()> {
     Ok(())
 }
 ```
+
+# Changelog
+## 0.2.3
+- Use `async-std` instead of `runtime` for TcpStream, allowing using darkredis with any runtime.
+## 0.2.2
+- Update dependencies
+## 0.2.1
+- Fix compilation error on latest nightly
+## 0.2.0
+- Command and CommandList no longer perform any copies
+- Added args method to Command and CommandList
+- `lpush` and `rpush` now take multiple arguments
+- Support password auth
+- `lrange` no longer returns an Option, returns an empty vec instead.
+- Add convenience functions for the following commands: `lset`, `ltrim`
+## 0.1.3
+- Remove unnecesarry generic parameter from lpop and rpop methods.
+## 0.1.2
+- Fix a couple documentation errors
+## 0.1.1
+- Initial release
 
 # Testing
 If you're hacking on `darkredis` and want to run the tests, make sure you have a Redis instance running on your local machine on port 6379. The tests clean up any keys set by themselves, unless the test fails. Please submit an issue if it does not.
