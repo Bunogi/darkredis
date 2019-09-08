@@ -124,7 +124,7 @@ impl Connection {
         }
     }
 
-    ///Run a series of commands on this connection
+    ///Run a series of commands on this connection.
     pub async fn run_commands(&mut self, command: CommandList<'_>) -> Result<Vec<Value>> {
         let mut stream = self.stream.lock().await;
         let number_of_commands = command.command_count();
@@ -139,7 +139,7 @@ impl Connection {
         Ok(results)
     }
 
-    ///Run a single command on this connection
+    ///Run a single command on this connection.
     pub async fn run_command(&mut self, command: Command<'_>) -> Result<Value> {
         let mut stream = self.stream.lock().await;
         let serialized: Vec<u8> = command.serialize();
@@ -148,18 +148,18 @@ impl Connection {
         Ok(Self::read_value(&mut stream).await?)
     }
 
-    ///Convenience function for the Redis command SET
-    pub async fn set<K, D>(&mut self, key: K, data: D) -> Result<()>
+    ///Sets `key` to `value`.
+    pub async fn set<K, D>(&mut self, key: K, value: D) -> Result<()>
     where
         K: AsRef<[u8]>,
         D: AsRef<[u8]>,
     {
-        let command = Command::new("SET").arg(&key).arg(&data);
+        let command = Command::new("SET").arg(&key).arg(&value);
 
         self.run_command(command).await.map(|_| ())
     }
 
-    ///Convenience function for the Redis command SET, with an expiry time.
+    ///Set `key` to `value`, and set `key` to expire in `expiry`'s timeframe.
     pub async fn set_with_expiry<K, D>(
         &mut self,
         key: K,
@@ -180,7 +180,7 @@ impl Connection {
         self.run_command(command).await.map(|_| ())
     }
 
-    ///Convenience function for the Redis command DEL
+    ///Delete `key`.
     pub async fn del<K>(&mut self, key: K) -> Result<()>
     where
         K: AsRef<[u8]>,
@@ -189,88 +189,97 @@ impl Connection {
         self.run_command(command).await.map(|_| ())
     }
 
-    ///Convenience function for the Redis command GET
-    pub async fn get<D>(&mut self, key: D) -> Result<Option<Vec<u8>>>
+    ///Get the value of `key`.
+    pub async fn get<K>(&mut self, key: K) -> Result<Option<Vec<u8>>>
     where
-        D: AsRef<[u8]>,
+        K: AsRef<[u8]>,
     {
         let command = Command::new("GET").arg(&key);
 
         Ok(self.run_command(command).await?.optional_string())
     }
 
-    ///Convenience function for the Redis command LPUSH
-    pub async fn lpush<K, D>(&mut self, key: K, data: D) -> Result<isize>
+    ///Push a value to `list` from the left.
+    ///# Return value
+    ///The number of elements in `list`
+    pub async fn lpush<K, V>(&mut self, list: K, value: V) -> Result<isize>
     where
         K: AsRef<[u8]>,
-        D: AsRef<[u8]>,
+        V: AsRef<[u8]>,
     {
-        let command = Command::new("LPUSH").arg(&key).arg(&data);
+        let command = Command::new("LPUSH").arg(&list).arg(&value);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like lpush, but push multiple values through a slice
-    pub async fn lpush_slice<K, D>(&mut self, key: K, data: &[D]) -> Result<isize>
+    ///Like [lpush](Self::lpush), but push multiple values through a slice.
+    pub async fn lpush_slice<K, V>(&mut self, key: K, data: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
-        D: AsRef<[u8]>,
+        V: AsRef<[u8]>,
     {
         let command = Command::new("LPUSH").arg(&key).args(data);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Convenience function for the Redis command RPUSH
-    pub async fn rpush<K, D>(&mut self, key: K, data: D) -> Result<isize>
+    ///Push a value to `list` from the right.
+    ///# Return value
+    ///The number of elements in `list`
+    pub async fn rpush<K, V>(&mut self, list: K, value: V) -> Result<isize>
     where
         K: AsRef<[u8]>,
-        D: AsRef<[u8]>,
+        V: AsRef<[u8]>,
     {
-        let command = Command::new("RPUSH").arg(&key).arg(&data);
+        let command = Command::new("RPUSH").arg(&list).arg(&value);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like rpush, but push multiple values through a slice
-    pub async fn rpush_slice<K, D>(&mut self, key: K, data: &[D]) -> Result<isize>
+    ///Like [rpush](Self::rpush) but push multiple values through a slice.
+    pub async fn rpush_slice<K, V>(&mut self, key: K, values: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
-        D: AsRef<[u8]>,
+        V: AsRef<[u8]>,
     {
-        let command = Command::new("RPUSH").arg(&key).args(data);
+        let command = Command::new("RPUSH").arg(&key).args(values);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Convenience function for the Redis command LPOP
-    pub async fn lpop<K>(&mut self, key: K) -> Result<Option<Vec<u8>>>
+    ///Pop a value from a list from the left side.
+    ///# Return value
+    ///The value popped from `list`
+    pub async fn lpop<K>(&mut self, list: K) -> Result<Option<Vec<u8>>>
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("LPOP").arg(&key);
+        let command = Command::new("LPOP").arg(&list);
 
         Ok(self.run_command(command).await?.optional_string())
     }
 
-    ///Convenience function for the Redis command RPOP
-    pub async fn rpop<K>(&mut self, key: K) -> Result<Option<Vec<u8>>>
+    ///Pop a value from a list from the right side.
+    ///# Return value
+    ///The value popped from `list`
+    pub async fn rpop<K>(&mut self, list: K) -> Result<Option<Vec<u8>>>
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("RPOP").arg(&key);
+        let command = Command::new("RPOP").arg(&list);
 
         Ok(self.run_command(command).await?.optional_string())
     }
 
-    ///Convenience function for the Redis command LRANGE
-    pub async fn lrange<K>(&mut self, key: K, from: isize, to: isize) -> Result<Vec<Vec<u8>>>
+    ///Get a series of elements from `list`, from index `from` to `to`. If they are negative, take the
+    ///index from the right side of the list.
+    pub async fn lrange<K>(&mut self, list: K, from: isize, to: isize) -> Result<Vec<Vec<u8>>>
     where
         K: AsRef<[u8]>,
     {
         let from = from.to_string();
         let to = to.to_string();
-        let command = Command::new("LRANGE").arg(&key).arg(&from).arg(&to);
+        let command = Command::new("LRANGE").arg(&list).arg(&from).arg(&to);
 
         Ok(self
             .run_command(command)
@@ -281,42 +290,44 @@ impl Connection {
             .collect())
     }
 
-    ///Convenience function for the Redis command LLEN
-    pub async fn llen<K>(&mut self, key: K) -> Result<Option<isize>>
+    ///Get the number of elements in `list`, or `None` if the list doesn't exist.
+    pub async fn llen<K>(&mut self, list: K) -> Result<Option<isize>>
     where
         K: AsRef<[u8]>,
     {
-        let command = Command::new("LLEN").arg(&key);
+        let command = Command::new("LLEN").arg(&list);
         Ok(self.run_command(command).await?.optional_integer())
     }
 
-    ///Convenience function for LSET.
-    pub async fn lset<K, D>(&mut self, key: K, index: usize, value: D) -> Result<()>
+    ///Set the value of the element at `index` in `list` to `value`.
+    pub async fn lset<K, V>(&mut self, list: K, index: usize, value: V) -> Result<()>
     where
         K: AsRef<[u8]>,
-        D: AsRef<[u8]>,
+        V: AsRef<[u8]>,
     {
         let index = index.to_string();
-        let command = Command::new("LSET").arg(&key).arg(&index).arg(&value);
+        let command = Command::new("LSET").arg(&list).arg(&index).arg(&value);
 
         self.run_command(command).await?;
         Ok(())
     }
 
-    ///Convenience function for LTRIM
-    pub async fn ltrim<K>(&mut self, key: K, start: usize, stop: usize) -> Result<()>
+    ///Trim `list` from `start` to `stop`.
+    pub async fn ltrim<K>(&mut self, list: K, start: usize, stop: usize) -> Result<()>
     where
         K: AsRef<[u8]>,
     {
         let start = start.to_string();
         let stop = stop.to_string();
-        let command = Command::new("LTRIM").arg(&key).arg(&start).arg(&stop);
+        let command = Command::new("LTRIM").arg(&list).arg(&start).arg(&stop);
         self.run_command(command).await?;
 
         Ok(())
     }
 
-    ///Convenience function for INCR
+    ///Increment `key` by one.
+    ///# Return value
+    ///The new value of `key`.
     pub async fn incr<K>(&mut self, key: K) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -325,7 +336,9 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Convenience function for INCRBY
+    ///Increment `key` by `val`.
+    ///# Return value
+    ///The new value of `key`
     pub async fn incrby<K>(&mut self, key: K, val: isize) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -335,7 +348,9 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Convenience function for INCRBYFLOAT
+    ///Increment `key` by a floating point value `val`.
+    ///# Return value
+    ///The new value of `key`
     pub async fn incrbyfloat<K>(&mut self, key: K, val: f64) -> Result<f64>
     where
         K: AsRef<[u8]>,
@@ -346,7 +361,9 @@ impl Connection {
         Ok(String::from_utf8_lossy(&result).parse::<f64>().unwrap())
     }
 
-    ///Convenience function for DECR
+    ///Decrement `key` by a floating point value `val`.
+    ///# Return value
+    ///The new value of `key`
     pub async fn decr<K>(&mut self, key: K) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -355,7 +372,9 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Convenience function for DECRBY
+    ///Decrement `key` by `val`.
+    ///# Return value
+    ///The new value of `key`
     pub async fn decrby<K>(&mut self, key: K, val: isize) -> Result<isize>
     where
         K: AsRef<[u8]>,
