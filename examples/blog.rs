@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use darkredis::Connection;
 
 async fn add_comments(mut connection: Connection, post: usize, comments: Vec<&str>) {

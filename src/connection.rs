@@ -315,6 +315,55 @@ impl Connection {
 
         Ok(())
     }
+
+    ///Convenience function for INCR
+    pub async fn incr<K>(&mut self, key: K) -> Result<isize>
+    where
+        K: AsRef<[u8]>
+    {
+        let command = Command::new("INCR").arg(&key);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Convenience function for INCRBY
+    pub async fn incrby<K>(&mut self, key: K, val: isize) -> Result<isize>
+    where
+        K: AsRef<[u8]>
+    {
+        let val = val.to_string();
+        let command = Command::new("INCRBY").arg(&key).arg(&val);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Convenience function for INCRBYFLOAT
+    pub async fn incrbyfloat<K>(&mut self, key: K, val: f64) -> Result<f64>
+    where
+        K: AsRef<[u8]>
+    {
+        let val = val.to_string();
+        let command = Command::new("INCRBYFLOAT").arg(&key).arg(&val);
+        let result = self.run_command(command).await?.unwrap_string();
+        Ok(String::from_utf8_lossy(&result).parse::<f64>().unwrap())
+    }
+
+    ///Convenience function for DECR
+    pub async fn decr<K>(&mut self, key: K) -> Result<isize>
+    where
+        K: AsRef<[u8]>
+    {
+        let command = Command::new("DECR").arg(&key);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Convenience function for DECRBY
+    pub async fn decrby<K>(&mut self, key: K, val: isize) -> Result<isize>
+    where
+        K: AsRef<[u8]>
+    {
+        let val = val.to_string();
+        let command = Command::new("DECRBY").arg(&key).arg(&val);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
 }
 
 #[cfg(test)]
@@ -408,6 +457,24 @@ mod test {
                 assert_eq!(redis.lrange(&list_key, 0, 0).await.unwrap(), vec![b"hello"]);
             },
             list_key
+        );
+    }
+
+    #[runtime::test]
+    async fn incr_decr() {
+        redis_test!(
+            redis,
+            {
+                assert_eq!(redis.incr(&int_key).await.unwrap(), 1);
+                assert_eq!(redis.incrby(&int_key, 41).await.unwrap(), 42);
+                assert_eq!(redis.decr(&int_key).await.unwrap(), 41);
+                assert_eq!(redis.decrby(&int_key, 20).await.unwrap(), 21);
+                assert_eq!(redis.get(&int_key).await.unwrap(), Some(b"21".to_vec()));
+
+                assert_eq!(redis.incrbyfloat(&float_key, 8.0).await.unwrap(), 8.0);
+                assert_eq!(redis.incrbyfloat(&float_key, -4.0).await.unwrap(), 4.0);
+            },
+            int_key, float_key
         );
     }
 }

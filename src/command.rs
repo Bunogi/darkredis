@@ -2,7 +2,6 @@
 ///to only run one command, use [`Command`](crate::Command), which has almost the same API.
 ///# Example
 /// ```
-///#![feature(async_await)]
 ///use darkredis::{CommandList, Connection};
 ///# use darkredis::*;
 ///# #[runtime::main]
@@ -78,7 +77,6 @@ impl<'a> CommandList<'a> {
 ///A struct for defining commands manually. If you want pipelining, use [`CommandList`](crate::CommandList).
 ///# Example
 /// ```
-///#![feature(async_await)]
 ///use darkredis::{Command, Connection};
 ///# use darkredis::*;
 ///# #[runtime::main]
