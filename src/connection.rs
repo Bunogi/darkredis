@@ -364,6 +364,54 @@ impl Connection {
         let command = Command::new("DECRBY").arg(&key).arg(&val);
         Ok(self.run_command(command).await?.unwrap_integer())
     }
+
+    ///Append a string `val` to `key`.
+    ///# Return value
+    ///The new size of `key`
+    pub async fn append<K, V>(&mut self, key: K, val: V) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        V: AsRef<[u8]>,
+    {
+        let command = Command::new("APPEND").arg(&key).arg(&val);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Get the string value for every `key`, or `None`` if it doesn't exist
+    pub async fn mget<K>(&mut self, keys: &[K]) -> Result<Vec<Option<Vec<u8>>>>
+    where
+        K: AsRef<[u8]>,
+    {
+        let command = Command::new("MGET").args(&keys);
+        let result = self.run_command(command).await?.unwrap_array();
+        let output: Vec<Option<Vec<u8>>> =
+            result.into_iter().map(|r| r.optional_string()).collect();
+        Ok(output)
+    }
+
+    ///Set multiple keys at once. If the number of keys and values are not equal, set all keys that have values and vice versa.
+    pub async fn mset<K, V>(&mut self, keys: &[K], values: &[V]) -> Result<()>
+    where
+        K: AsRef<[u8]>,
+        V: AsRef<[u8]>,
+    {
+        let args: Vec<&[u8]> = keys
+            .iter()
+            .zip(values.iter())
+            .flat_map(|(key, value)| vec![key.as_ref(), value.as_ref()].into_iter())
+            .collect();
+        let command = Command::new("MSET").args(&args);
+        self.run_command(command).await?;
+        Ok(())
+    }
+
+    ///Returns true if a key has been previously set.
+    pub async fn exists<K>(&mut self, key: K) -> Result<bool>
+    where K:AsRef<[u8]>
+    {
+        let command = Command::new("EXISTS").arg(&key);
+        Ok(self.run_command(command).await? == Value::Integer(1))
+    }
 }
 
 #[cfg(test)]
@@ -476,6 +524,63 @@ mod test {
             },
             int_key,
             float_key
+        );
+    }
+
+    #[runtime::test]
+    async fn append() {
+        redis_test!(
+            redis,
+            {
+                assert_eq!(redis.append(&key, b"Hello, ").await.unwrap(), 7);
+                assert_eq!(redis.append(&key, b"world!").await.unwrap(), 13);
+                assert_eq!(
+                    redis.get(&key).await.unwrap(),
+                    Some(b"Hello, world!".to_vec())
+                );
+            },
+            key
+        );
+    }
+
+    #[runtime::test]
+    async fn mget_mset() {
+        redis_test!(
+            redis,
+            {
+                //Verify that it works with trait objects
+                let keys: Vec<&(dyn AsRef<[u8]> + Sync)> = vec![&"key1", &b"key2"];
+                let values: Vec<&(dyn AsRef<[u8]> + Sync)> = vec![&"value1", &b"value2"];
+                redis.mset(&keys, &values).await.unwrap();
+
+                let simple_keys = vec!["key1", "key2", "key3"];
+                let simple_values = vec!["value1", "value2"];
+                redis
+                    .mset(simple_keys.as_slice(), simple_values.as_slice())
+                    .await
+                    .unwrap();
+
+                assert_eq!(redis.mget(&simple_keys).await.unwrap(), vec![Some(b"value1".to_vec()), Some(b"value2".to_vec()), None]);
+
+                //clean up
+                redis.del("key1").await.unwrap();
+                redis.del("key2").await.unwrap();
+                redis.del("key3").await.unwrap();
+            },
+            key
+        );
+    }
+
+    #[runtime::test]
+    async fn exists() {
+        redis_test!(
+            redis,
+            {
+                assert_eq!(redis.exists(&key).await.unwrap(), false);
+                redis.set(&key, "foo").await.unwrap();
+                assert_eq!(redis.exists(&key).await.unwrap(), true);
+            },
+            key
         );
     }
 }
