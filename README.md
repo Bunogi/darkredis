@@ -37,6 +37,7 @@ async fn main() -> darkredis::Result<()> {
 # Changelog
 ## 0.3.0
 - Add convenience functions for the `incr` and `decr` family of commands
+- Allow renaming of client connections
 ## 0.2.3
 - Use `async-std` instead of `runtime` for TcpStream, allowing using darkredis with any runtime.
 ## 0.2.2

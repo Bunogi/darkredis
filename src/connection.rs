@@ -1,6 +1,6 @@
 use crate::{Command, CommandList, Error, Result, Value};
-use futures::{lock::Mutex, prelude::*};
 use async_std::net::TcpStream;
+use futures::{lock::Mutex, prelude::*};
 use std::io;
 use std::net;
 use std::sync::Arc;
@@ -27,7 +27,7 @@ pub struct Connection {
 }
 
 impl Connection {
-    ///Connect to a Redis instance running at `address`.
+    ///Connect to a Redis instance running at `address`. If you wish to name this connection, run the [`CLIENT SETNAME`](https://redis.io/commands/client-setname) command.
     pub async fn connect<A>(address: A, password: Option<&str>) -> Result<Self>
     where
         A: net::ToSocketAddrs,
@@ -319,7 +319,7 @@ impl Connection {
     ///Convenience function for INCR
     pub async fn incr<K>(&mut self, key: K) -> Result<isize>
     where
-        K: AsRef<[u8]>
+        K: AsRef<[u8]>,
     {
         let command = Command::new("INCR").arg(&key);
         Ok(self.run_command(command).await?.unwrap_integer())
@@ -328,7 +328,7 @@ impl Connection {
     ///Convenience function for INCRBY
     pub async fn incrby<K>(&mut self, key: K, val: isize) -> Result<isize>
     where
-        K: AsRef<[u8]>
+        K: AsRef<[u8]>,
     {
         let val = val.to_string();
         let command = Command::new("INCRBY").arg(&key).arg(&val);
@@ -338,7 +338,7 @@ impl Connection {
     ///Convenience function for INCRBYFLOAT
     pub async fn incrbyfloat<K>(&mut self, key: K, val: f64) -> Result<f64>
     where
-        K: AsRef<[u8]>
+        K: AsRef<[u8]>,
     {
         let val = val.to_string();
         let command = Command::new("INCRBYFLOAT").arg(&key).arg(&val);
@@ -349,7 +349,7 @@ impl Connection {
     ///Convenience function for DECR
     pub async fn decr<K>(&mut self, key: K) -> Result<isize>
     where
-        K: AsRef<[u8]>
+        K: AsRef<[u8]>,
     {
         let command = Command::new("DECR").arg(&key);
         Ok(self.run_command(command).await?.unwrap_integer())
@@ -358,7 +358,7 @@ impl Connection {
     ///Convenience function for DECRBY
     pub async fn decrby<K>(&mut self, key: K, val: isize) -> Result<isize>
     where
-        K: AsRef<[u8]>
+        K: AsRef<[u8]>,
     {
         let val = val.to_string();
         let command = Command::new("DECRBY").arg(&key).arg(&val);
@@ -474,7 +474,8 @@ mod test {
                 assert_eq!(redis.incrbyfloat(&float_key, 8.0).await.unwrap(), 8.0);
                 assert_eq!(redis.incrbyfloat(&float_key, -4.0).await.unwrap(), 4.0);
             },
-            int_key, float_key
+            int_key,
+            float_key
         );
     }
 }

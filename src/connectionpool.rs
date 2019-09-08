@@ -12,8 +12,19 @@ pub struct ConnectionPool {
 impl ConnectionPool {
     ///Create a new connection pool for `address`, with `connection_count` connections. All connections
     ///are created in this function, and depending on the amount of connections desired, can therefore
-    ///take some time to complete.
+    ///take some time to complete. By default, connections will be created with the name `darkredis-n`,
+    ///where n represents the connection number.
     pub async fn create(
+        address: String,
+        password: Option<&str>,
+        connection_count: usize,
+    ) -> Result<Self> {
+        Self::create_with_name("darkredis", address, password, connection_count).await
+    }
+
+    ///Create a connection pool, but name each connection by `name`. Useful if you are running multiple services on a single Redis instance.
+    pub async fn create_with_name(
+        name: &str,
         address: String,
         password: Option<&str>,
         connection_count: usize,
@@ -26,7 +37,7 @@ impl ConnectionPool {
 
         for i in 0..connection_count {
             let mut conn = Connection::connect(out.address.as_ref(), password).await?;
-            let client_name = format!("darkredis-{}", i + 1);
+            let client_name = format!("{}-{}", name, i + 1);
             conn.run_command(Command::new("CLIENT").arg(b"SETNAME").arg(&client_name))
                 .await?;
             out.connections.push(Arc::new(Mutex::new(conn)));
