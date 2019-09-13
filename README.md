@@ -35,6 +35,8 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.3.1
+- Expclicitly use traits from `async-std`, not `std`. This fixes compilation on async-std 0.99.5
 ## 0.3.0
 - Add convenience functions for the `INCR` and `DECR` family of commands, as well as for `APPEND`, `MGET`, `MSET`, `EXISTS`.
 - Improve the documentation of convenience functions

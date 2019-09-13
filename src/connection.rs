@@ -1,8 +1,6 @@
 use crate::{Command, CommandList, Error, Result, Value};
-use async_std::net::TcpStream;
+use async_std::{net::{self, TcpStream}, io};
 use futures::{lock::Mutex, prelude::*};
-use std::io;
-use std::net;
 use std::sync::Arc;
 use std::time;
 
