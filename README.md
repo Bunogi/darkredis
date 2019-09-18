@@ -47,6 +47,8 @@ async fn main() -> darkredis::Result<()> {
 - Simple Pubsub support using the `MessageStream` and `PMessageStream` types.
 - Ability to spawn a new connection using the settings from a ConnectionPool
 - Use `tokio` in test mode.
+- Add convenience function for `PUBLISH`
+- Add pubsub example
 ## 0.3.1
 - Expclicitly use traits from `async-std`, not `std`. This fixes compilation on async-std 0.99.5
 ## 0.3.0

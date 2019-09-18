@@ -213,6 +213,16 @@ impl Connection {
         Ok(stream::PMessageStream::new(self))
     }
 
+    ///Publsh `message` to `channel`. Returns how many clients received the message.
+    pub async fn publish<C, M>(&mut self, channel: C, message: M) -> Result<isize>
+    where
+        C: AsRef<[u8]>,
+        M: AsRef<[u8]>,
+    {
+        let command = Command::new("PUBLISH").arg(&channel).arg(&message);
+        self.run_command(command).await.map(|i| i.unwrap_integer())
+    }
+
     ///Sets `key` to `value`.
     pub async fn set<K, D>(&mut self, key: K, value: D) -> Result<()>
     where

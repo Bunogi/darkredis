@@ -64,6 +64,7 @@ impl Stream for ValueStream {
 }
 
 ///A stream of [`Message`s](Message). The stream will end if an error is encountered, if the logging feature is enabled. Requires a logger compatible with the [`log`](https://crates.io/crates/log) crate.
+#[must_use = "No messages will be received if left unused"]
 pub struct MessageStream {
     inner: Pin<Box<ValueStream>>,
 }
@@ -77,7 +78,7 @@ impl MessageStream {
 }
 
 impl Stream for MessageStream {
-    type Item = Result<Message>;
+    type Item = Message;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         match self.inner.as_mut().poll_next(cx) {
@@ -87,7 +88,7 @@ impl Stream for MessageStream {
                 let channel = result.next().unwrap().unwrap_string();
                 let message = result.next().unwrap().unwrap_string();
                 let output = Message { channel, message };
-                Poll::Ready(Some(Ok(output)))
+                Poll::Ready(Some(output))
             }
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,
@@ -96,6 +97,7 @@ impl Stream for MessageStream {
 }
 
 ///A stream of [`PMessage`s](PMessage). See [`MessageStream`](MessageStream) for more info.
+#[must_use = "No messages will be received if left unused"]
 pub struct PMessageStream {
     inner: Pin<Box<ValueStream>>,
 }

@@ -19,6 +19,9 @@
 #[cfg(all(feature = "runtime_tokio", feature = "runtime_agnostic"))]
 compile_error!("The `runtime_tokio` and `runtime_agnostic` features are mutually exclusive!");
 
+#[cfg(not(any(feature = "runtime_tokio", feature = "runtime_agnostic")))]
+compile_error!("Expected one of the features `runtime_tokio` and `runtime_agnostic`");
+
 #[macro_use]
 extern crate quick_error;
 

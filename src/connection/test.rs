@@ -92,7 +92,7 @@ async fn pubsub() {
                     },
                 ];
                 for i in 0..3 {
-                    let result = stream.next().await.unwrap().unwrap();
+                    let result = stream.next().await.unwrap();
                     assert_eq!(result, expected[i]);
                 }
             };
@@ -121,9 +121,7 @@ async fn pubsub_pattern() {
             let receive_channel = publish_channel.clone();
 
             let publish_future = async {
-                let command = Command::new("PUBLISH").arg(&publish_channel).arg(&"foo");
-
-                publisher.run_command(command).await.unwrap();
+                assert_eq!(publisher.publish(&publish_channel, "foo").await.unwrap(), 1);
             };
 
             let receiver_future = async move {
