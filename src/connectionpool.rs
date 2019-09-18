@@ -1,5 +1,6 @@
 use crate::{Command, Connection, Result};
 use futures::lock::{Mutex, MutexGuard};
+use std::ops::Deref;
 use std::sync::Arc;
 
 ///A connection pool. Clones are cheap and is the expected way to send the pool around your application.
@@ -7,6 +8,8 @@ use std::sync::Arc;
 pub struct ConnectionPool {
     connections: Vec<Arc<Mutex<Connection>>>,
     address: Arc<String>,
+    password: Option<Arc<String>>,
+    name: Arc<String>,
 }
 
 impl ConnectionPool {
@@ -14,6 +17,8 @@ impl ConnectionPool {
     ///are created in this function, and depending on the amount of connections desired, can therefore
     ///take some time to complete. By default, connections will be created with the name `darkredis-n`,
     ///where n represents the connection number.
+    ///# Panics
+    ///Will panic if the number of connections is equal to zero.
     pub async fn create(
         address: String,
         password: Option<&str>,
@@ -23,15 +28,20 @@ impl ConnectionPool {
     }
 
     ///Create a connection pool, but name each connection by `name`. Useful if you are running multiple services on a single Redis instance.
+    ///# Panics
+    ///Will panic if the number of connections is equal to zero.
     pub async fn create_with_name(
         name: &str,
         address: String,
         password: Option<&str>,
         connection_count: usize,
     ) -> Result<Self> {
+        assert!(connection_count > 0);
         let connections = Vec::new();
         let mut out = Self {
             connections,
+            name: Arc::new(name.to_string()),
+            password: password.map(|s| Arc::new(s.to_string())),
             address: Arc::new(address),
         };
 
@@ -59,13 +69,27 @@ impl ConnectionPool {
         let lockers = self.connections.iter().map(|l| l.lock());
         futures::future::select_all(lockers).await.0
     }
+
+    ///Create a new, owned connection using the settings of the current pool. Useful for subscribers or blocking operations that may not yield a value for a long time.
+    pub async fn spawn(&self, name: Option<&str>) -> Result<Connection> {
+        let mut out = Connection::connect(
+            self.address.as_ref(),
+            self.password.as_ref().map(|p| p.deref().as_str()),
+        )
+        .await?;
+        let name = name.unwrap_or("spawned_connection");
+        let name = format!("{}-{}", self.name, name);
+        let command = Command::new("CLIENT").arg(&"SETNAME").arg(&name);
+        out.run_command(command).await?;
+        Ok(out)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::Value;
-    #[runtime::test]
+    #[tokio::test]
     async fn pooling() {
         let connections = 4; //Arbitrary number, must be bigger than 1
         let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), None, connections)
@@ -82,5 +106,19 @@ mod test {
             );
             locks.push(conn);
         }
+    }
+
+    #[tokio::test]
+    async fn spawning() {
+        let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), None, 1)
+            .await
+            .unwrap();
+
+        let mut conn = pool.spawn(Some("named")).await.unwrap();
+        let command = Command::new("CLIENT").arg(b"GETNAME");
+        assert_eq!(
+            conn.run_command(command).await.unwrap(),
+            Value::String("darkredis-named".to_string().into_bytes())
+        );
     }
 }

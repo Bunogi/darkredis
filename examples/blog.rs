@@ -33,7 +33,7 @@ async fn show_posts(mut connection: Connection) {
     connection.del("posts").await.unwrap();
 }
 
-#[runtime::main]
+#[tokio::main]
 async fn main() {
     let connection = Connection::connect("127.0.0.1:6379", None).await.unwrap();
 

@@ -1,8 +1,29 @@
 use crate::{Command, CommandList, Error, Result, Value};
-use async_std::{net::{self, TcpStream}, io};
-use futures::{lock::Mutex, prelude::*};
-use std::sync::Arc;
-use std::time;
+use futures::lock::Mutex;
+
+#[cfg(feature = "runtime_agnostic")]
+use async_std::{
+    io,
+    net::{TcpStream, ToSocketAddrs},
+};
+#[cfg(feature = "runtime_agnostic")]
+use futures::{AsyncReadExt, AsyncWriteExt};
+
+#[cfg(feature = "runtime_tokio")]
+use tokio::{
+    io::{self, AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+};
+#[cfg(feature = "runtime_tokio")]
+use tokio_net::ToSocketAddrs;
+
+use std::{sync::Arc, time};
+
+pub mod stream;
+pub use stream::{Message, MessageStream, PMessage, PMessageStream};
+
+#[cfg(test)]
+mod test;
 
 async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
     let mut buffer = Vec::new();
@@ -21,14 +42,14 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
 #[derive(Clone)]
 pub struct Connection {
-    stream: Arc<Mutex<TcpStream>>,
+    pub(crate) stream: Arc<Mutex<TcpStream>>,
 }
 
 impl Connection {
     ///Connect to a Redis instance running at `address`. If you wish to name this connection, run the [`CLIENT SETNAME`](https://redis.io/commands/client-setname) command.
     pub async fn connect<A>(address: A, password: Option<&str>) -> Result<Self>
     where
-        A: net::ToSocketAddrs,
+        A: ToSocketAddrs,
     {
         let stream = Arc::new(Mutex::new(
             TcpStream::connect(address)
@@ -109,8 +130,8 @@ impl Connection {
         Ok(Value::Array(values))
     }
 
-    //Read one value from the stream using the parse_* utility functions
-    async fn read_value(mut stream: &mut TcpStream) -> Result<Value> {
+    //Read a value from the connection.
+    pub(crate) async fn read_value(mut stream: &mut TcpStream) -> Result<Value> {
         let buf = read_until(&mut stream, b'\n').await?;
         match buf[0] {
             b'+' | b'-' | b':' => Self::parse_simple_value(&buf).await,
@@ -144,6 +165,52 @@ impl Connection {
         stream.write_all(&serialized).await?;
 
         Ok(Self::read_value(&mut stream).await?)
+    }
+
+    ///Consume `self`, and subscribe to `channels`, returning a stream of [`Message`s](stream::Message). As of now, there's no way to get the connection back, nor change the subscribed topics.
+    pub async fn subscribe<K>(mut self, channels: &[K]) -> Result<stream::MessageStream>
+    where
+        K: AsRef<[u8]>,
+    {
+        let command = Command::new("SUBSCRIBE").args(channels);
+
+        //TODO: Find out if we care about the values given here
+        let _ = self.run_command(command).await?;
+        {
+            let mut stream = self.stream.lock().await;
+            for _ in 0..channels.len() - 1 {
+                let response = Self::read_value(&mut stream).await?;
+                assert_eq!(
+                    response.unwrap_array()[0],
+                    Value::String("subscribe".into())
+                );
+            }
+        }
+
+        Ok(stream::MessageStream::new(self))
+    }
+
+    ///Exactly like [`subscribe`](Self::subscribe), but subscribe to patterns instead.
+    pub async fn psubscribe<K>(mut self, patterns: &[K]) -> Result<stream::PMessageStream>
+    where
+        K: AsRef<[u8]>,
+    {
+        let command = Command::new("PSUBSCRIBE").args(patterns);
+
+        //TODO: Find out if we care about the values given here
+        let _ = self.run_command(command).await?;
+        {
+            let mut stream = self.stream.lock().await;
+            for _ in 0..patterns.len() - 1 {
+                let response = Self::read_value(&mut stream).await?;
+                assert_eq!(
+                    response.unwrap_array()[0],
+                    Value::String("psubscribe".into())
+                );
+            }
+        }
+
+        Ok(stream::PMessageStream::new(self))
     }
 
     ///Sets `key` to `value`.
@@ -424,180 +491,10 @@ impl Connection {
 
     ///Returns true if a key has been previously set.
     pub async fn exists<K>(&mut self, key: K) -> Result<bool>
-    where K:AsRef<[u8]>
+    where
+        K: AsRef<[u8]>,
     {
         let command = Command::new("EXISTS").arg(&key);
         Ok(self.run_command(command).await? == Value::Integer(1))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::{redis_test, test::*, Command};
-    #[runtime::test]
-    async fn parse_nil() {
-        redis_test!(
-            redis,
-            {
-                let command = Command::new("GET").arg(&null_key);
-
-                assert_eq!(redis.run_command(command).await.unwrap(), Value::Nil);
-            },
-            null_key
-        );
-    }
-    #[runtime::test]
-    async fn parse_ok() {
-        redis_test!(
-            redis,
-            {
-                let command = Command::new("SET").arg(&some_key).arg(b"");
-
-                assert_eq!(redis.run_command(command).await.unwrap(), Value::Ok);
-            },
-            some_key
-        );
-    }
-    #[runtime::test]
-    async fn pipelined_commands() {
-        redis_test!(
-            redis,
-            {
-                let command = CommandList::new("SET")
-                    .arg(&simple_key)
-                    .arg(b"")
-                    .command("LPUSH")
-                    .arg(&list_key)
-                    .arg(b"")
-                    .command("LPUSH")
-                    .arg(&list_key)
-                    .arg(b"");
-
-                assert_eq!(
-                    redis.run_commands(command).await.unwrap(),
-                    vec![Value::Ok, Value::Integer(1), Value::Integer(2)]
-                );
-            },
-            simple_key,
-            list_key
-        );
-    }
-
-    #[runtime::test]
-    async fn get_set() {
-        redis_test!(
-            redis,
-            {
-                redis.set(&key, "foo").await.unwrap();
-                assert_eq!(redis.get(&key).await.unwrap(), Some("foo".into()));
-            },
-            key
-        );
-    }
-
-    #[runtime::test]
-    async fn list_convenience() {
-        redis_test!(
-            redis,
-            {
-                redis.rpush_slice(&list_key, &["1", "2"]).await.unwrap();
-                redis.lpush(&list_key, "0").await.unwrap();
-
-                let expected: Vec<Vec<u8>> = vec![b"0", b"1", b"2"]
-                    .into_iter()
-                    .map(|s| s.to_vec())
-                    .collect();
-                assert_eq!(redis.lrange(&list_key, 0, 3).await.unwrap(), expected);
-                assert_eq!(redis.lpop(&list_key).await.unwrap(), Some(b"0".to_vec()));
-                assert_eq!(redis.rpop(&list_key).await.unwrap(), Some(b"2".to_vec()));
-                assert_eq!(redis.llen(&list_key).await.unwrap(), Some(1));
-
-                let long_list: Vec<String> =
-                    std::iter::repeat("value".to_string()).take(10).collect();
-                redis.lpush_slice(&list_key, &long_list).await.unwrap();
-                redis.ltrim(&list_key, 0, 4).await.unwrap();
-                redis.lset(&list_key, 0, b"hello").await.unwrap();
-                assert_eq!(redis.llen(&list_key).await.unwrap(), Some(5));
-                assert_eq!(redis.lrange(&list_key, 0, 0).await.unwrap(), vec![b"hello"]);
-            },
-            list_key
-        );
-    }
-
-    #[runtime::test]
-    async fn incr_decr() {
-        redis_test!(
-            redis,
-            {
-                assert_eq!(redis.incr(&int_key).await.unwrap(), 1);
-                assert_eq!(redis.incrby(&int_key, 41).await.unwrap(), 42);
-                assert_eq!(redis.decr(&int_key).await.unwrap(), 41);
-                assert_eq!(redis.decrby(&int_key, 20).await.unwrap(), 21);
-                assert_eq!(redis.get(&int_key).await.unwrap(), Some(b"21".to_vec()));
-
-                assert_eq!(redis.incrbyfloat(&float_key, 8.0).await.unwrap(), 8.0);
-                assert_eq!(redis.incrbyfloat(&float_key, -4.0).await.unwrap(), 4.0);
-            },
-            int_key,
-            float_key
-        );
-    }
-
-    #[runtime::test]
-    async fn append() {
-        redis_test!(
-            redis,
-            {
-                assert_eq!(redis.append(&key, b"Hello, ").await.unwrap(), 7);
-                assert_eq!(redis.append(&key, b"world!").await.unwrap(), 13);
-                assert_eq!(
-                    redis.get(&key).await.unwrap(),
-                    Some(b"Hello, world!".to_vec())
-                );
-            },
-            key
-        );
-    }
-
-    #[runtime::test]
-    async fn mget_mset() {
-        redis_test!(
-            redis,
-            {
-                //Verify that it works with trait objects
-                let keys: Vec<&(dyn AsRef<[u8]> + Sync)> = vec![&"key1", &b"key2"];
-                let values: Vec<&(dyn AsRef<[u8]> + Sync)> = vec![&"value1", &b"value2"];
-                redis.mset(&keys, &values).await.unwrap();
-
-                let simple_keys = vec!["key1", "key2", "key3"];
-                let simple_values = vec!["value1", "value2"];
-                redis
-                    .mset(simple_keys.as_slice(), simple_values.as_slice())
-                    .await
-                    .unwrap();
-
-                assert_eq!(redis.mget(&simple_keys).await.unwrap(), vec![Some(b"value1".to_vec()), Some(b"value2".to_vec()), None]);
-
-                //clean up
-                redis.del("key1").await.unwrap();
-                redis.del("key2").await.unwrap();
-                redis.del("key3").await.unwrap();
-            },
-            key
-        );
-    }
-
-    #[runtime::test]
-    async fn exists() {
-        redis_test!(
-            redis,
-            {
-                assert_eq!(redis.exists(&key).await.unwrap(), false);
-                redis.set(&key, "foo").await.unwrap();
-                assert_eq!(redis.exists(&key).await.unwrap(), true);
-            },
-            key
-        );
     }
 }

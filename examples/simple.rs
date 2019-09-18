@@ -1,6 +1,6 @@
 use darkredis::ConnectionPool;
 
-#[runtime::main]
+#[tokio::main]
 async fn main() -> darkredis::Result<()> {
     let pool = ConnectionPool::create("127.0.0.1:6379".into(), None, num_cpus::get()).await?;
     let mut conn = pool.get().await;

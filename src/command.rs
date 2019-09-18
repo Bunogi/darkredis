@@ -4,7 +4,7 @@
 /// ```
 ///use darkredis::{CommandList, Connection};
 ///# use darkredis::*;
-///# #[runtime::main]
+///# #[tokio::main]
 ///# async fn main() {
 ///# let mut connection = Connection::connect("127.0.0.1:6379", None).await.unwrap();
 ///# connection.del("pipelined-list").await.unwrap();
@@ -79,7 +79,7 @@ impl<'a> CommandList<'a> {
 /// ```
 ///use darkredis::{Command, Connection};
 ///# use darkredis::*;
-///# #[runtime::main]
+///# #[tokio::main]
 ///# async fn main() {
 ///# let mut connection = Connection::connect("127.0.0.1:6379", None).await.unwrap();
 ///# connection.del("singular-key").await.unwrap();

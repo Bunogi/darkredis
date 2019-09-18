@@ -4,7 +4,7 @@
 //! ```
 //! use darkredis::*;
 //!
-//! # #[runtime::main]
+//! # #[tokio::main]
 //! # async fn main() {
 //! // Create a connection pool with 4 connections
 //! let pool = ConnectionPool::create("127.0.0.1:6379".into(), None, 4).await.unwrap();
@@ -15,6 +15,9 @@
 //! # connection.del("some-key").await.unwrap();
 //! # }
 //! ```
+
+#[cfg(all(feature = "runtime_tokio", feature = "runtime_agnostic"))]
+compile_error!("The `runtime_tokio` and `runtime_agnostic` features are mutually exclusive!");
 
 #[macro_use]
 extern crate quick_error;
@@ -28,7 +31,7 @@ mod error;
 mod test;
 
 pub use command::{Command, CommandList};
-pub use connection::Connection;
+pub use connection::{Connection, Message, MessageStream, PMessage, PMessageStream};
 pub use connectionpool::ConnectionPool;
 pub use error::Error;
 

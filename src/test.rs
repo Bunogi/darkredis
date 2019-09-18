@@ -1,12 +1,6 @@
 ///The address to connect to when testing
 pub const TEST_ADDRESS: &str = "127.0.0.1:6379";
 
-lazy_static::lazy_static! {
-    pub static ref CONNECTION_POOL: crate::ConnectionPool = futures::executor::block_on(
-        crate::ConnectionPool::create(TEST_ADDRESS.into(), None, num_cpus::get())
-    ).unwrap();
-}
-
 #[macro_export]
 ///Clean up any keys given as identifiers.
 macro_rules! cleanup_keys {
@@ -16,12 +10,12 @@ macro_rules! cleanup_keys {
                 .arg(&$key)
             )*;
 
-        (*$conn).run_command(command).await.unwrap();
+        $conn.run_command(command).await.unwrap();
     };
     ($conn:ident, $key:expr) => {
         let command = Command::new("DEL").arg(&$key);
 
-        (*$conn).run_command(command).await.unwrap();
+        $conn.run_command(command).await.unwrap();
     }
 }
 
@@ -45,7 +39,9 @@ macro_rules! redis_test {
     ($redis:ident, $block:tt, $( $key:ident ),+) => {
         use crate::create_key;
         use crate::cleanup_keys;
-        let mut $redis = CONNECTION_POOL.get().await;
+        //Would use a static connection pool like before, but using `futures::block_on` doesn't work wth tokio
+        //and there appears to be no way to do it in a test like this anyway
+        let mut $redis = Connection::connect(TEST_ADDRESS, None).await.unwrap();
         $(
             let $key: Vec<u8> = create_key!($key);
         )*
@@ -59,7 +55,7 @@ macro_rules! redis_test {
 ///Defines a redis test but in a way that is appropriate for a doc test. Does NOT do housekeeping and therefore does not clean up after itself.
 macro_rules! redis_doc_test {
     ($redis:ident, $block:tt) => {
-        let mut $redis = CONNECTION_POOL.get().await;
+        let mut $redis = Connection::connect(TEST_ADDRESS, None).await.unwrap();
         $block
     };
 }
