@@ -46,6 +46,7 @@ async fn main() -> darkredis::Result<()> {
 - Use `tokio` in test mode.
 - Add convenience function for `PUBLISH`
 - Add pubsub example
+- Add variants of builder functions for `Command` and `CommandList` which mutate the object instead of moving it.
 ## 0.3.1
 - Expclicitly use traits from `async-std`, not `std`. This fixes compilation on async-std 0.99.5
 ## 0.3.0
