@@ -71,13 +71,16 @@ impl ConnectionPool {
     }
 
     ///Create a new, owned connection using the settings of the current pool. Useful for subscribers or blocking operations that may not yield a value for a long time.
-    pub async fn spawn(&self, name: Option<&str>) -> Result<Connection> {
+    pub async fn spawn<'a, N>(&'a self, name: N) -> Result<Connection>
+    where
+        N: Into<Option<&'a str>>,
+    {
         let mut out = Connection::connect(
             self.address.as_ref(),
             self.password.as_ref().map(|p| p.deref().as_str()),
         )
         .await?;
-        let name = name.unwrap_or("spawned_connection");
+        let name = name.into().unwrap_or("spawned_connection");
         let name = format!("{}-{}", self.name, name);
         let command = Command::new("CLIENT").arg(&"SETNAME").arg(&name);
         out.run_command(command).await?;

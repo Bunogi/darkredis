@@ -2,7 +2,7 @@
 
 use darkredis::ConnectionPool;
 use futures::StreamExt;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tokio::timer::Interval;
 
 #[tokio::main]
@@ -14,13 +14,13 @@ async fn main() {
 
     let channels = vec!["some-channel", "some-other-channel"];
     //Create a listener and name it "mylistener" so we can identify it using `CLIENT LIST`.
-    let listener = pool.spawn(Some("mylistener")).await.unwrap();
+    let listener = pool.spawn("mylistener").await.unwrap();
     let messagestream = listener.subscribe(&channels).await.unwrap();
 
     //Publish some messages
     tokio::spawn(async move {
         let mut publisher = pool.get().await;
-        let mut interval = tokio::timer::Interval::new_interval(Duration::from_secs(1));
+        let mut interval = Interval::new_interval(Duration::from_secs(1));
         loop {
             publisher.publish("some-channel", "hello!").await.unwrap();
             publisher

@@ -3,7 +3,7 @@ use futures::{task::Context, Future, FutureExt, Poll, Stream};
 use std::pin::Pin;
 
 ///A message received from a channel.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct Message {
     ///The channel the message was received on
@@ -13,7 +13,7 @@ pub struct Message {
 }
 
 ///A message received from a channel (Pattern version)
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct PMessage {
     ///The channel the message was received on
@@ -26,7 +26,7 @@ pub struct PMessage {
 
 struct ValueStream {
     conn: Connection,
-    poll_future: Pin<Box<dyn Future<Output = Result<Value>>>>,
+    poll_future: Pin<Box<dyn Future<Output = Result<Value>> + Send>>,
 }
 
 impl ValueStream {
@@ -36,7 +36,7 @@ impl ValueStream {
         Self { conn, poll_future }
     }
 
-    fn create_poll_future(conn: Connection) -> Pin<Box<dyn Future<Output = Result<Value>>>> {
+    fn create_poll_future(conn: Connection) -> Pin<Box<dyn Future<Output = Result<Value>> + Send>> {
         async move {
             let mut lock = conn.stream.lock().await;
             Connection::read_value(&mut lock).await
