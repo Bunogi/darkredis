@@ -20,7 +20,7 @@ runtime_tokio = ["tokio", "tokio-net"]
 runtime_agnostic = ["async-std"]
 
 [dependencies]
-async-std = { version = "0.99.4", optional = true }
+async-std = { version = "=0.99.5", optional = true }
 futures-preview = "0.3.0-alpha.18"
 quick-error = "1.2.2"
 tokio = { version = "0.2.0-alpha.4", optional = true }
