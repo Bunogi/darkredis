@@ -213,7 +213,7 @@ impl Connection {
         Ok(stream::PMessageStream::new(self))
     }
 
-    ///Publsh `message` to `channel`. Returns how many clients received the message.
+    ///Publish `message` to `channel`. Returns how many clients received the message.
     pub async fn publish<C, M>(&mut self, channel: C, message: M) -> Result<isize>
     where
         C: AsRef<[u8]>,
