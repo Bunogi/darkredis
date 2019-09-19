@@ -9,12 +9,9 @@ Currently not all Redis commands have convenience functions, and there may be er
 ## Why?
 There are other Redis clients out there for Rust, but none of them allow you to easily write `await` in your code. `redis-rs` is a good client for sure, but it's async module is based on `futures 0.1`. Therefore, I ripped my custom-written Redis client from an async project of mine. The result of this is `darkredis`, and I hope it will be useful to you, even if only to experiment with async and await.
 
-## Note
-Currently, `darkredis` does not compile on the latest nightly, due to some lifetime changes that may or may not stay. See [issue #2](https://github.com/Bunogi/darkredis/issues/2) for more information.
-
 # Cargo features
- - `runtime_tokio`(on by default): Use the tokio 0.2 runtime and Tcp primitives. Might be required for some future functionality.
- - `runtime_agonic`: Use `async-std` instead of tokio, allowing you to use other runtimes than tokio. Trying to use it with tokio won't work.
+ - `runtime_tokio`(on by default): Use the tokio 0.2 runtime and Tcp primitives. Requires a running tokio 0.2 runtime.
+ - `runtime_agonic`: Use `async-std` instead of tokio, allowing you to use other runtimes than tokio. Is mutually exclusive with the `runtime_tokio` feature.
 
 # Getting started
 - Add `darkredis` and to your `Cargo.toml`.

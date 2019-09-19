@@ -190,7 +190,7 @@ impl Connection {
         Ok(stream::MessageStream::new(self))
     }
 
-    ///Exactly like [`subscribe`](Self::subscribe), but subscribe to patterns instead.
+    ///Exactly like [`subscribe`](Connection::subscribe), but subscribe to patterns instead.
     pub async fn psubscribe<K>(mut self, patterns: &[K]) -> Result<stream::PMessageStream>
     where
         K: AsRef<[u8]>,
@@ -287,7 +287,7 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like [lpush](Self::lpush), but push multiple values through a slice.
+    ///Like [`lpush`](Connection::lpush), but push multiple values.
     pub async fn lpush_slice<K, V>(&mut self, key: K, data: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -311,7 +311,7 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like [rpush](Self::rpush) but push multiple values through a slice.
+    ///Like [`rpush`](Connection::rpush), but push multiple values through a slice.
     pub async fn rpush_slice<K, V>(&mut self, key: K, values: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,

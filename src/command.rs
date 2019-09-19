@@ -22,24 +22,48 @@ pub struct CommandList<'a> {
 }
 
 impl<'a> CommandList<'a> {
-    ///Create a new command from `cmd`.
+    ///Create a new command list starting with `cmd`.
     pub fn new(cmd: &'a str) -> Self {
         let commands = vec![Command::new(cmd)];
         Self { commands }
     }
 
-    ///Consumes the command and appends an argument to it. Note that this will NOT create a new
+    ///Consumes the command and appends an argument to it, builder style. Note that this will NOT create a new
     ///command for pipelining. That's what [`Commandlist::command`](crate::CommandList::command) is for.
+    ///# See also
+    ///[`append_arg`](CommandList::append_arg)
     pub fn arg<D>(mut self, data: &'a D) -> Self
     where
         D: AsRef<[u8]>,
     {
-        self.commands.last_mut().unwrap().args.push(data.as_ref());
+        self.append_arg(data);
         self
     }
 
-    ///Add multiple arguments from a slice.
+    ///Add multiple arguments from a slice, builder-style.
+    ///# See also
+    ///[`append_args`](CommandList::append_args)
     pub fn args<D>(mut self, arguments: &'a [D]) -> Self
+    where
+        D: AsRef<[u8]>,
+    {
+        self.append_args(arguments);
+        self
+    }
+
+    ///Add a command to be executed in a pipeline, builder-style. Calls to `Command::arg` will add arguments from
+    ///now on.
+    ///# See also
+    ///[`append_command`](CommandList::append_command)
+    pub fn command(mut self, cmd: &'a str) -> Self {
+        self.commands.push(Command::new(cmd));
+        self
+    }
+
+    ///Append arguments from a slice.
+    ///# See also
+    ///[`args`](CommandList::args)
+    pub fn append_args<D>(&mut self, arguments: &'a [D])
     where
         D: AsRef<[u8]>,
     {
@@ -47,14 +71,23 @@ impl<'a> CommandList<'a> {
         for arg in arguments {
             last_command.args.push(arg.as_ref());
         }
-        self
     }
 
-    ///Add a command to be executed in a pipeline. Calls to `Command::arg` will add arguments from
-    ///now on.
-    pub fn command(mut self, cmd: &'a str) -> Self {
-        self.commands.push(Command::new(cmd));
-        self
+    ///Mutate `self` by adding an additional argument.
+    ///# See also
+    ///[`arg`](CommandList::arg)
+    pub fn append_arg<D>(&mut self, data: &'a D)
+    where
+        D: AsRef<[u8]>,
+    {
+        self.commands.last_mut().unwrap().args.push(data.as_ref());
+    }
+
+    ///Append a new command to `self`.
+    ///# See also
+    ///[`command`](CommandList::command)
+    pub fn append_command(&mut self, cmd: &'a str) {
+        self.commands.push(Command::new(cmd))
     }
 
     ///Count the number of commands currently in the pipeline
@@ -105,25 +138,49 @@ impl<'a> Command<'a> {
         }
     }
 
-    ///Append an argument to this command.
+    ///Append an argument to this command, builder-style.
+    ///# See also
+    ///[`append_arg`](Command::append_arg)
     pub fn arg<D>(mut self, data: &'a D) -> Self
     where
         D: AsRef<[u8]>,
     {
-        self.args.push(data.as_ref());
+        self.append_arg(data);
         self
     }
 
     ///Add multiple arguments to a command in slice form.
+    ///# See also
+    ///[`append_args`](Command::append_args)
     pub fn args<D>(mut self, arguments: &'a [D]) -> Self
+    where
+        D: AsRef<[u8]>,
+    {
+        self.append_args(arguments);
+
+        self
+    }
+
+    ///Append an argument to `self`.
+    ///# See also
+    ///[`arg`](Command::append_arg)
+    pub fn append_arg<D>(&mut self, data: &'a D)
+    where
+        D: AsRef<[u8]>,
+    {
+        self.args.push(data.as_ref());
+    }
+
+    ///Append multiple arguments to `self`.
+    ///# See also
+    ///[`args`](Command::args)
+    pub fn append_args<D>(&mut self, arguments: &'a [D])
     where
         D: AsRef<[u8]>,
     {
         for arg in arguments {
             self.args.push(arg.as_ref());
         }
-
-        self
     }
 
     pub(crate) fn serialize(self) -> Vec<u8> {
