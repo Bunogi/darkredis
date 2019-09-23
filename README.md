@@ -40,7 +40,7 @@ async fn main() -> darkredis::Result<()> {
 
 # Changelog
 ## 0.4.0
-- Add the `runtime_agnostic` and `runtime_tokio` features.
+- (BREAKING) Add the `runtime_agnostic` and `runtime_tokio` features.
 - Simple Pubsub support using the `MessageStream` and `PMessageStream` types.
 - Ability to spawn a new connection using the settings from a ConnectionPool
 - Use `tokio` in test mode.

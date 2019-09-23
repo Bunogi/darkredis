@@ -1,12 +1,8 @@
 language: rust
 rust:
   - nightly
-  - nightly-2019-09-03
 services:
   - redis-server
 script:
   - cargo test
   - cargo test --no-default-features --features=runtime_agnostic
-matrix:
-  allow_failures:
-    - rust: nightly
