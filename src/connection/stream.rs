@@ -1,5 +1,8 @@
 use super::{Connection, Result, Value};
-use futures::{task::Context, Future, FutureExt, Poll, Stream};
+use futures::{
+    task::{Context, Poll},
+    Future, FutureExt, Stream,
+};
 use std::pin::Pin;
 
 ///A message received from a channel.

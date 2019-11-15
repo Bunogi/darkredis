@@ -1,8 +1,14 @@
 language: rust
 rust:
   - nightly
+  - stable
+  - beta
 services:
   - redis-server
 script:
   - cargo test
   - cargo test --no-default-features --features=runtime_agnostic
+jobs:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
