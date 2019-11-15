@@ -2,12 +2,12 @@
 [![Documentation](https://docs.rs/darkredis/badge.svg)](https://docs.rs/darkredis) [![Build Status](https://travis-ci.org/Bunogi/darkredis.svg?branch=master)](https://travis-ci.org/Bunogi/darkredis) [![Crates.io Status](https://img.shields.io/crates/v/darkredis.svg)](https://crates.io/crates/darkredis)
 
 
-`darkredis` is a Redis client for Rust written using the new `std::future` and `async` await. Currently nightly only, the library tries to be ergonomic and easy to use.
+`darkredis` is a Redis client for Rust written using the new `std::future` and `async` await. It's designed to be easy to use, and lacks advanced features. Requires rust 1.39.0 or newer.
 
 Currently not all Redis commands have convenience functions, and there may be ergonomic improvements to make.
 
 ## Why?
-There are other Redis clients out there for Rust, but none of them allow you to easily write `await` in your code. `redis-rs` is a good client for sure, but it's async module is based on `futures 0.1`. Therefore, I ripped my custom-written Redis client from an async project of mine. The result of this is `darkredis`, and I hope it will be useful to you, even if only to experiment with async and await.
+When `darkredis` was originally written, it was part of an async project. At the time, there was no real way to use `.await` with redis-rs, so I set out to change that. The result is `darkredis`, and it has worked very well for my own personal use, which it might for you too. It's designed to be as simple as possible, serving as an easy way to call redis commands.
 
 # Cargo features
  - `runtime_tokio`(on by default): Use the tokio 0.2 runtime and Tcp primitives. Requires a running tokio 0.2 runtime.
@@ -39,6 +39,8 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.4.1
+- Updated to async-std 1.0.1 and futures 0.3.1
 ## 0.4.0
 - (BREAKING) Add the `runtime_agnostic` and `runtime_tokio` features.
 - Simple Pubsub support using the `MessageStream` and `PMessageStream` types.
