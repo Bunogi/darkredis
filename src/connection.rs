@@ -40,6 +40,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 ///A connection to Redis. Copying is cheap as the inner type is a simple, futures-aware, `Arc<Mutex>`, and will
 ///not create a new connection. Use a [`ConnectionPool`](crate::ConnectionPool) if you want to use pooled conections.
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
+///Check the [redis command reference](https://redis.io/commands) for in-depth explanations of each command.
 #[derive(Clone)]
 pub struct Connection {
     pub(crate) stream: Arc<Mutex<TcpStream>>,
@@ -302,6 +303,50 @@ impl Connection {
             .arg(&milliseconds);
 
         self.run_command(command).await.map(|_| ())
+    }
+
+    ///Set `key` to expire `seconds` seconds from now.
+    pub async fn expire_seconds<K>(&mut self, key: K, seconds: u32) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        let seconds = seconds.to_string();
+        let command = Command::new("EXPIRE").arg(&key).arg(&seconds);
+
+        self.run_command(command).await.map(|i| i.unwrap_integer())
+    }
+
+    ///Set `key` to expire `milliseconds` ms from now.
+    pub async fn expire_ms<K>(&mut self, key: K, seconds: u32) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        let seconds = seconds.to_string();
+        let command = Command::new("PEXPIRE").arg(&key).arg(&seconds);
+
+        self.run_command(command).await.map(|i| i.unwrap_integer())
+    }
+
+    ///Set `key` to expire at unix timestamp `timestamp`, measured in seconds.
+    pub async fn expire_at_seconds<K>(&mut self, key: K, timestamp: u64) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        let timestamp = timestamp.to_string();
+        let command = Command::new("EXPIREAT").arg(&key).arg(&timestamp);
+
+        self.run_command(command).await.map(|i| i.unwrap_integer())
+    }
+
+    ///Set `key` to expire at unix timestamp `timestamp`, measured in milliseconds.
+    pub async fn expire_at_ms<K>(&mut self, key: K, timestamp: u64) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        let timestamp = timestamp.to_string();
+        let command = Command::new("PEXPIREAT").arg(&key).arg(&timestamp);
+
+        self.run_command(command).await.map(|i| i.unwrap_integer())
     }
 
     ///Delete `key`.
