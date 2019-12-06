@@ -10,12 +10,12 @@ use async_std::{
 use futures::{AsyncReadExt, AsyncWriteExt};
 
 #[cfg(feature = "runtime_tokio")]
+use tokio::net::ToSocketAddrs;
+#[cfg(feature = "runtime_tokio")]
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
 };
-#[cfg(feature = "runtime_tokio")]
-use tokio_net::ToSocketAddrs;
 
 use std::{sync::Arc, time};
 
