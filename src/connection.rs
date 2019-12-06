@@ -240,8 +240,8 @@ impl Connection {
     ///`std::time::Duration` consists of nanoseconds and seconds, which don't map well to either `SET EX` nor `SET PX`.
     ///This function only used the seconds part of the Duration, which may be confusing.
     #[deprecated(
-        since = "0.4.2",
-        note = "This function will be removed in 0.5.0. Please use set_and_expire_seconds or set_and_expire_ms instead."
+        since = "0.5.0",
+        note = "This function will be removed in 0.6.0. Please use set_and_expire_seconds or set_and_expire_ms instead."
     )]
     pub async fn set_with_expiry<K, D>(
         &mut self,
@@ -350,12 +350,14 @@ impl Connection {
     }
 
     ///Delete `key`.
-    pub async fn del<K>(&mut self, key: K) -> Result<()>
+    ///# Return value
+    ///The number of deleted keys
+    pub async fn del<K>(&mut self, key: K) -> Result<isize>
     where
         K: AsRef<[u8]>,
     {
         let command = Command::new("DEL").arg(&key);
-        self.run_command(command).await.map(|_| ())
+        self.run_command(command).await.map(|i| i.unwrap_integer())
     }
 
     ///Get the value of `key`.
