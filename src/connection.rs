@@ -235,6 +235,13 @@ impl Connection {
     }
 
     ///Set `key` to `value`, and set `key` to expire in `expiry`'s timeframe.
+    ///# Deprecated
+    ///`std::time::Duration` consists of nanoseconds and seconds, which don't map well to either `SET EX` nor `SET PX`.
+    ///This function only used the seconds part of the Duration, which may be confusing.
+    #[deprecated(
+        since = "0.4.2",
+        note = "This function will be removed in 0.5.0. Please use set_and_expire_seconds or set_and_expire_ms instead."
+    )]
     pub async fn set_with_expiry<K, D>(
         &mut self,
         key: K,
@@ -251,6 +258,48 @@ impl Connection {
             .arg(&data)
             .arg(b"EX")
             .arg(&expiry);
+
+        self.run_command(command).await.map(|_| ())
+    }
+
+    ///Set the key `key` to `data`, and set it to expire after `seconds` seconds.
+    pub async fn set_and_expire_seconds<K, D>(
+        &mut self,
+        key: K,
+        data: D,
+        seconds: u32,
+    ) -> Result<()>
+    where
+        K: AsRef<[u8]>,
+        D: AsRef<[u8]>,
+    {
+        let seconds = seconds.to_string();
+        let command = Command::new("SET")
+            .arg(&key)
+            .arg(&data)
+            .arg(b"EX")
+            .arg(&seconds);
+
+        self.run_command(command).await.map(|_| ())
+    }
+
+    ///Set the key `key` to `data`, and set it to expire after `milliseconds` ms.
+    pub async fn set_and_expire_ms<K, D>(
+        &mut self,
+        key: K,
+        data: D,
+        milliseconds: u32,
+    ) -> Result<()>
+    where
+        K: AsRef<[u8]>,
+        D: AsRef<[u8]>,
+    {
+        let milliseconds = milliseconds.to_string();
+        let command = Command::new("SET")
+            .arg(&key)
+            .arg(&data)
+            .arg(b"PX")
+            .arg(&milliseconds);
 
         self.run_command(command).await.map(|_| ())
     }
