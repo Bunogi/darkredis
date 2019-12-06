@@ -39,6 +39,10 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.5.0
+- Update to tokio 0.2.3 and async-std 1.2.0
+- Add expiry commands
+- Connection: deprecate `set_with_expiry`, use `set_and_expire_seconds` and `set_and_expire_ms` instead.
 ## 0.4.1
 - Updated to async-std 1.0.1 and futures 0.3.1
 ## 0.4.0
