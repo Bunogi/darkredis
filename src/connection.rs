@@ -108,11 +108,17 @@ impl Connection {
 
     //Assumes that there will never be nested arrays in a redis response.
     async fn parse_array(start: &[u8], mut stream: &mut TcpStream) -> Result<Value> {
-        let num = String::from_utf8_lossy(&start[1..])
+        let num_parsed = String::from_utf8_lossy(&start[1..])
             .trim()
-            .parse::<usize>()
+            .parse::<i32>()
             .unwrap();
 
+        // result can be negative (blpop/brpop return '-1' on timeout)
+        if num_parsed < 0 {
+            return Ok(Value::Array(Vec::new()));
+        }
+
+        let num = num_parsed as usize;
         let mut values = Vec::with_capacity(num);
 
         for _ in 0..num {
@@ -440,6 +446,55 @@ impl Connection {
         let command = Command::new("RPOP").arg(&list);
 
         Ok(self.run_command(command).await?.optional_string())
+    }
+
+    ///Pop a value from one of the lists from the left side.
+    ///Block timeout seconds when there are no values to pop (timeout=0 means infinite)
+    ///# Return value
+    ///* `Ok(Some((list,value)))`: name of the list and corresponding value
+    ///* `Ok(None)`: timeout (no values)
+    ///* `Err(err)`: there was an error
+    pub async fn blpop<K>(&mut self, lists: &[K], timeout: u32) -> Result<Option<Vec<Vec<u8>>>>
+    where
+        K: AsRef<[u8]>,
+    {
+        self.blpop_brpop(lists, timeout, "BLPOP").await
+    }
+
+    ///Pop a value from one of the lists from the right side.
+    ///Block timeout seconds when there are no values to pop (timeout=0 means infinite)
+    ///# Return value
+    ///* `Ok(Some((list,value)))`: name of the list and corresponding value
+    ///* `Ok(None)`: timeout (no values)
+    ///* `Err(err)`: there was an error
+    pub async fn brpop<K>(&mut self, lists: &[K], timeout: u32) -> Result<Option<Vec<Vec<u8>>>>
+    where
+        K: AsRef<[u8]>,
+    {
+        self.blpop_brpop(lists, timeout, "BRPOP").await
+    }
+
+    ///blpop and brpop common code
+    async fn blpop_brpop<K>(
+        &mut self,
+        lists: &[K],
+        timeout: u32,
+        redis_cmd: &str,
+    ) -> Result<Option<Vec<Vec<u8>>>>
+    where
+        K: AsRef<[u8]>,
+    {
+        let timeout = timeout.to_string();
+        let command = Command::new(redis_cmd).args(&lists).arg(&timeout);
+        let arr = self.run_command(command).await?.unwrap_array();
+        match arr.len() {
+            0 => Ok(None),
+            2 => Ok(Some(arr.into_iter().map(|s| s.unwrap_string()).collect())),
+            n => Err(Error::UnexpectedResponse(format!(
+                "{}: wrong number of elements received: {}",
+                redis_cmd, n
+            ))),
+        }
     }
 
     ///Get a series of elements from `list`, from index `from` to `to`. If they are negative, take the
