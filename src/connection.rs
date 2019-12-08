@@ -115,7 +115,7 @@ impl Connection {
 
         // result can be negative (blpop/brpop return '-1' on timeout)
         if num_parsed < 0 {
-            return Ok(Value::Array(Vec::new()));
+            return Ok(Value::Nil);
         }
 
         let num = num_parsed as usize;
