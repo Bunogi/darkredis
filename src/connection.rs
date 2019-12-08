@@ -486,13 +486,23 @@ impl Connection {
     {
         let timeout = timeout.to_string();
         let command = Command::new(redis_cmd).args(&lists).arg(&timeout);
-        let arr = self.run_command(command).await?.unwrap_array();
-        match arr.len() {
-            0 => Ok(None),
-            2 => Ok(Some(arr.into_iter().map(|s| s.unwrap_string()).collect())),
-            n => Err(Error::UnexpectedResponse(format!(
-                "{}: wrong number of elements received: {}",
-                redis_cmd, n
+        match self.run_command(command).await? {
+            Value::Array(values) => {
+                let vlen = values.len();
+                if vlen == 2 {
+                    return Ok(Some(
+                        values.into_iter().map(|s| s.unwrap_string()).collect(),
+                    ));
+                }
+                Err(Error::UnexpectedResponse(format!(
+                    "{}: wrong number of elements received: {}",
+                    redis_cmd, vlen
+                )))
+            }
+            Value::Nil => Ok(None),
+            other => Err(Error::UnexpectedResponse(format!(
+                "{}: {:?}",
+                redis_cmd, other
             ))),
         }
     }
