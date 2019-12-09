@@ -39,6 +39,8 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.5.1
+- Add blpop and brpop
 ## 0.5.0
 - Update to tokio 0.2.3 and async-std 1.2.0
 - Add expiry commands
