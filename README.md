@@ -39,6 +39,9 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.5.2
+- Improve serialization performance by 50%! 🎉
+- Add benchmarks
 ## 0.5.1
 - Add blpop and brpop
 ## 0.5.0

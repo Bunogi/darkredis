@@ -1,3 +1,5 @@
+use std::io::Write;
+
 ///A struct for defining commands manually, which allows for pipelining of several commands. If you need
 ///to only run one command, use [`Command`](crate::Command), which has almost the same API.
 ///# Example
@@ -99,11 +101,18 @@ impl<'a> CommandList<'a> {
     pub(crate) fn serialize(self) -> Vec<u8> {
         let mut out = Vec::new();
         for command in self.commands {
-            let mut serialized = command.serialize();
-            out.append(&mut serialized);
+            command.serialize(&mut out);
         }
 
         out
+    }
+}
+
+#[cfg(feature = "bench")]
+impl<'a> CommandList<'a> {
+    ///Workaround for benchmarking
+    pub fn serialize_bench(self) -> Vec<u8> {
+        self.serialize()
     }
 }
 
@@ -130,7 +139,7 @@ pub struct Command<'a> {
 }
 
 impl<'a> Command<'a> {
-    ///Create a new a.
+    ///Create a new Command.
     pub fn new(cmd: &'a str) -> Self {
         Self {
             command: cmd,
@@ -183,22 +192,36 @@ impl<'a> Command<'a> {
         }
     }
 
-    pub(crate) fn serialize(self) -> Vec<u8> {
-        let mut out = format!("*{}\r\n", self.args.len() + 1).into_bytes();
-        let mut serialized_command =
-            format!("${}\r\n{}\r\n", self.command.len(), self.command).into_bytes();
-        out.append(&mut serialized_command);
+    pub(crate) fn serialize(self, buffer: &mut Vec<u8>) {
+        //Write array and command header
+        write!(
+            buffer,
+            "*{}\r\n${}\r\n{}\r\n",
+            self.args.len() + 1,
+            self.command.len(),
+            self.command
+        )
+        .unwrap();
 
         for arg in self.args {
-            let mut serialized = format!("${}\r\n", arg.len()).into_bytes();
+            //Serialize as byte string
+            write!(buffer, "${}\r\n", arg.len()).unwrap();
             for byte in arg {
-                serialized.push(*byte);
+                buffer.push(*byte);
             }
-            serialized.push(b'\r');
-            serialized.push(b'\n');
-
-            out.append(&mut serialized);
+            buffer.push(b'\r');
+            buffer.push(b'\n');
         }
+    }
+}
+
+#[cfg(any(feature = "bench", test))]
+impl<'a> Command<'a> {
+    #[inline(always)]
+    ///Wrapper/Workaround for benchmarking and testing `serialize`
+    pub fn serialize_bench(self) -> Vec<u8> {
+        let mut out = Vec::new();
+        self.serialize(&mut out);
         out
     }
 }
@@ -209,7 +232,7 @@ mod test {
     #[test]
     fn serialize_singular() {
         //The conversion makes it easier to understand failures
-        let command = Command::new("GET").arg(b"some-key").serialize();
+        let command = Command::new("GET").arg(b"some-key").serialize_bench();
         assert_eq!(
             String::from_utf8_lossy(&command),
             "*2\r\n$3\r\nGET\r\n$8\r\nsome-key\r\n"
@@ -235,7 +258,7 @@ mod test {
         let command = Command::new("LPUSH")
             .arg(b"some-key")
             .args(&arguments)
-            .serialize();
+            .serialize_bench();
         assert_eq!(
             String::from_utf8_lossy(&command),
             "*5\r\n$5\r\nLPUSH\r\n$8\r\nsome-key\r\n$1\r\na\r\n$1\r\nb\r\n$1\r\nc\r\n"

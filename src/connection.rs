@@ -168,8 +168,9 @@ impl Connection {
     ///Run a single command on this connection.
     pub async fn run_command(&mut self, command: Command<'_>) -> Result<Value> {
         let mut stream = self.stream.lock().await;
-        let serialized: Vec<u8> = command.serialize();
-        stream.write_all(&serialized).await?;
+        let mut buffer = Vec::new();
+        command.serialize(&mut buffer);
+        stream.write_all(&buffer).await?;
 
         Ok(Self::read_value(&mut stream).await?)
     }
