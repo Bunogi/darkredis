@@ -111,6 +111,7 @@ impl<'a> CommandList<'a> {
 #[cfg(feature = "bench")]
 impl<'a> CommandList<'a> {
     ///Workaround for benchmarking
+    #[inline(always)]
     pub fn serialize_bench(self) -> Vec<u8> {
         self.serialize()
     }
