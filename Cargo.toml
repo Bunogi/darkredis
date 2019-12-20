@@ -39,3 +39,7 @@ criterion = "0.3.0"
 [[bench]]
 name = "command"
 harness = false
+
+[[bench]]
+name = "pipelining"
+harness = false

@@ -10,17 +10,15 @@ use async_std::{
 use futures::{AsyncReadExt, AsyncWriteExt};
 
 #[cfg(feature = "runtime_tokio")]
-use tokio::net::ToSocketAddrs;
-#[cfg(feature = "runtime_tokio")]
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt},
-    net::TcpStream,
+    net::{TcpStream, ToSocketAddrs},
 };
 
 use std::{sync::Arc, time};
 
 pub mod stream;
-pub use stream::{Message, MessageStream, PMessage, PMessageStream};
+pub use stream::{Message, MessageStream, PMessage, PMessageStream, ResponseStream};
 
 #[cfg(test)]
 mod test;
@@ -173,6 +171,19 @@ impl Connection {
         stream.write_all(&buffer).await?;
 
         Ok(Self::read_value(&mut stream).await?)
+    }
+
+    ///Like [`run_command`](Connection::run_commands), but return a stream instead of a Vec of the results.
+    pub async fn run_commands_stream(
+        &mut self,
+        command: CommandList<'_>,
+    ) -> Result<ResponseStream> {
+        let mut lock = self.stream.lock().await;
+        let command_count = command.command_count();
+        let buffer = command.serialize();
+        lock.write_all(&buffer).await?;
+
+        Ok(ResponseStream::new(command_count, self.stream.clone()))
     }
 
     ///Consume `self`, and subscribe to `channels`, returning a stream of [`Message`s](stream::Message). As of now, there's no way to get the connection back, nor change the subscribed topics.

@@ -1,9 +1,13 @@
 use super::{Connection, Result, Value};
 use futures::{
+    lock::Mutex,
     task::{Context, Poll},
     Future, FutureExt, Stream,
 };
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
+
+#[cfg(feature = "runtime_tokio")]
+use tokio::net::TcpStream;
 
 ///A message received from a channel.
 #[derive(Debug, Clone)]
@@ -132,6 +136,57 @@ impl Stream for PMessageStream {
                 Poll::Ready(Some(output))
             }
             Poll::Ready(None) => Poll::Ready(None),
+            Poll::Pending => Poll::Pending,
+        }
+    }
+}
+
+type ResponseFuture = Pin<Box<dyn Future<Output = Result<Value>> + Send>>;
+///A stream of responses from a pipelined command.
+#[must_use]
+pub struct ResponseStream {
+    expected: usize,
+    received: usize,
+    stream: Arc<Mutex<TcpStream>>,
+    poll_future: ResponseFuture,
+}
+
+impl ResponseStream {
+    pub(crate) fn new(reply_count: usize, stream: Arc<Mutex<TcpStream>>) -> Self {
+        let poll_future = Self::create_future(stream.clone());
+        Self {
+            poll_future,
+            expected: reply_count,
+            received: 0,
+            stream,
+        }
+    }
+
+    fn create_future(stream: Arc<Mutex<TcpStream>>) -> ResponseFuture {
+        async move {
+            let mut stream = stream.lock().await;
+            Connection::read_value(&mut stream).await
+        }
+            .boxed()
+    }
+}
+
+impl Stream for ResponseStream {
+    type Item = Result<Value>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        //Are there any values left to get?
+        if self.received == self.expected {
+            return Poll::Ready(None);
+        }
+
+        match self.poll_future.as_mut().poll(cx) {
+            Poll::Ready(p) => {
+                self.received += 1;
+                self.poll_future = Self::create_future(self.stream.clone());
+
+                Poll::Ready(Some(p))
+            }
             Poll::Pending => Poll::Pending,
         }
     }

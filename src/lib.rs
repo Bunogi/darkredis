@@ -1,4 +1,4 @@
-#![deny(missing_docs)]
+#![cfg_attr(not(feature = "bench"), deny(missing_docs))]
 
 //! Asyncronous redis client built using futures and async await, with optional connection pooling.
 //! ```
@@ -30,7 +30,10 @@ mod connection;
 mod connectionpool;
 mod error;
 
-#[cfg(test)]
+#[cfg(feature = "bench")]
+pub mod test;
+
+#[cfg(all(not(feature = "bench"), test))]
 mod test;
 
 pub use command::{Command, CommandList};
