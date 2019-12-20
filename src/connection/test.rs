@@ -1,6 +1,6 @@
 use super::*;
 use crate::{redis_test, test::*, Command, CommandList, PMessage, Value};
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 
 #[tokio::test]
 async fn parse_nil() {
@@ -14,6 +14,7 @@ async fn parse_nil() {
         null_key
     );
 }
+
 #[tokio::test]
 async fn parse_ok() {
     redis_test!(
@@ -26,6 +27,7 @@ async fn parse_ok() {
         some_key
     );
 }
+
 #[tokio::test]
 async fn pipelined_commands() {
     redis_test!(
@@ -42,7 +44,13 @@ async fn pipelined_commands() {
                 .arg(b"");
 
             assert_eq!(
-                redis.run_commands(command).await.unwrap(),
+                redis
+                    .run_commands(command)
+                    .await
+                    .unwrap()
+                    .try_collect::<Vec<Value>>()
+                    .await
+                    .unwrap(),
                 vec![Value::Ok, Value::Integer(1), Value::Integer(2)]
             );
         },
@@ -70,7 +78,13 @@ async fn pubsub() {
                     .arg(&channel2)
                     .arg(&"foobar");
 
-                publisher.run_commands(commands).await.unwrap();
+                publisher
+                    .run_commands(commands)
+                    .await
+                    .unwrap()
+                    .try_collect::<Vec<Value>>()
+                    .await
+                    .unwrap();
             };
 
             let c0 = channel0.clone();

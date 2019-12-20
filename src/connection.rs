@@ -10,17 +10,15 @@ use async_std::{
 use futures::{AsyncReadExt, AsyncWriteExt};
 
 #[cfg(feature = "runtime_tokio")]
-use tokio::net::ToSocketAddrs;
-#[cfg(feature = "runtime_tokio")]
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt},
-    net::TcpStream,
+    net::{TcpStream, ToSocketAddrs},
 };
 
 use std::{sync::Arc, time};
 
 pub mod stream;
-pub use stream::{Message, MessageStream, PMessage, PMessageStream};
+pub use stream::{Message, MessageStream, PMessage, PMessageStream, ResponseStream};
 
 #[cfg(test)]
 mod test;
@@ -150,21 +148,6 @@ impl Connection {
         }
     }
 
-    ///Run a series of commands on this connection.
-    pub async fn run_commands(&mut self, command: CommandList<'_>) -> Result<Vec<Value>> {
-        let mut stream = self.stream.lock().await;
-        let number_of_commands = command.command_count();
-        let serialized: Vec<u8> = command.serialize();
-        stream.write_all(&serialized).await?;
-
-        let mut results = Vec::with_capacity(number_of_commands);
-        for _ in 0..number_of_commands {
-            results.push(Self::read_value(&mut stream).await?);
-        }
-
-        Ok(results)
-    }
-
     ///Run a single command on this connection.
     pub async fn run_command(&mut self, command: Command<'_>) -> Result<Value> {
         let mut stream = self.stream.lock().await;
@@ -173,6 +156,16 @@ impl Connection {
         stream.write_all(&buffer).await?;
 
         Ok(Self::read_value(&mut stream).await?)
+    }
+
+    ///Run a series of commands on this connection, returning a stream of the results.
+    pub async fn run_commands(&mut self, command: CommandList<'_>) -> Result<ResponseStream> {
+        let mut lock = self.stream.lock().await;
+        let command_count = command.command_count();
+        let buffer = command.serialize();
+        lock.write_all(&buffer).await?;
+
+        Ok(ResponseStream::new(command_count, self.stream.clone()))
     }
 
     ///Consume `self`, and subscribe to `channels`, returning a stream of [`Message`s](stream::Message). As of now, there's no way to get the connection back, nor change the subscribed topics.

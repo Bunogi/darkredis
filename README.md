@@ -39,6 +39,8 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.6.0
+- Change `run_commands` to return a stream.
 ## 0.5.2
 - Improve serialization performance by 50%! 🎉
 - Add benchmarks

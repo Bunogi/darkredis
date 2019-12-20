@@ -5,6 +5,7 @@ use std::io::Write;
 ///# Example
 /// ```
 ///use darkredis::{CommandList, Connection};
+///use futures::TryStreamExt; //for `try_collect`
 ///# use darkredis::*;
 ///# #[tokio::main]
 ///# async fn main() {
@@ -15,10 +16,11 @@ use std::io::Write;
 ///     .command("LTRIM").arg(b"pipelined-list").arg(b"0").arg(b"100");
 /// let results = connection.run_commands(command).await.unwrap();
 ///
-/// assert_eq!(results, vec![Value::Integer(1), Value::Ok]);
+/// assert_eq!(results.try_collect::<Vec<Value>>().await.unwrap(), vec![Value::Integer(1), Value::Ok]);
 ///# connection.del("pipelined-list").await.unwrap();
 ///# }
 /// ```
+#[derive(Clone)]
 pub struct CommandList<'a> {
     commands: Vec<Command<'a>>,
 }
@@ -117,7 +119,7 @@ impl<'a> CommandList<'a> {
     }
 }
 
-///A struct for defining commands manually. If you want pipelining, use [`CommandList`](crate::CommandList).
+///A struct for defining commands manually. If you want to run multiple commands in a pipeline, use [`CommandList`](crate::CommandList).
 ///# Example
 /// ```
 ///use darkredis::{Command, Connection};
@@ -134,6 +136,7 @@ impl<'a> CommandList<'a> {
 ///# connection.del("singular-key").await.unwrap();
 ///# }
 /// ```
+#[derive(Clone)]
 pub struct Command<'a> {
     command: &'a str,
     args: Vec<&'a [u8]>,
