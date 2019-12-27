@@ -64,7 +64,7 @@ async fn pubsub() {
     redis_test!(
         publisher,
         {
-            let receiver = Connection::connect(TEST_ADDRESS, None).await.unwrap();
+            let receiver = Connection::connect(TEST_ADDRESS).await.unwrap();
             let channels = vec![&channel0, &channel1, &channel2];
             let mut stream = receiver.subscribe(&channels).await.unwrap();
             let publish_future = async {
@@ -124,7 +124,7 @@ async fn pubsub_pattern() {
     redis_test!(
         publisher,
         {
-            let receiver = Connection::connect(TEST_ADDRESS, None).await.unwrap();
+            let receiver = Connection::connect(TEST_ADDRESS).await.unwrap();
             let mut pattern = base_channel.clone();
             pattern.push(b'*');
             let patterns = vec![pattern.clone()];

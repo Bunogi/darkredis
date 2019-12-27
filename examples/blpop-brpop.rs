@@ -25,9 +25,9 @@ async fn blpop(mut conn: Connection) -> darkredis::Result<()> {
 
 #[tokio::main]
 async fn main() -> darkredis::Result<()> {
-    let mut conn = Connection::connect("127.0.0.1:6379", None).await?;
+    let mut conn = Connection::connect("127.0.0.1:6379").await?;
     tokio::spawn(async move {
-        let mut conn = Connection::connect("127.0.0.1:6379", None).await.unwrap();
+        let mut conn = Connection::connect("127.0.0.1:6379").await.unwrap();
         let step = Duration::from_millis(1_500);
         let msgs = vec![
             ("list_a", "msg1"),

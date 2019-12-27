@@ -48,7 +48,11 @@ impl<A: ToSocketAddrs + Send + Sync> Manager<A> {
 #[async_trait]
 impl<A: ToSocketAddrs + Send + Sync> deadpool::Manager<Connection, Error> for Manager<A> {
     async fn create(&self) -> Result<Connection, Error> {
-        let mut conn = Connection::connect(&self.address, self.password.as_ref()).await?;
+        let mut conn = if let Some(ref pass) = self.password {
+            Connection::connect_and_auth(&self.address, pass).await?
+        } else {
+            Connection::connect(&self.address).await?
+        };
         if let Some(ref name) = self.name {
             conn.run_command(Command::new("CLIENT").arg(b"SETNAME").arg(&name))
                 .await?;

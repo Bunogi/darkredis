@@ -1,12 +1,12 @@
 use crate::{Command, CommandList, Error, Result, Value};
 use futures::lock::Mutex;
 
-#[cfg(feature = "runtime_agnostic")]
+#[cfg(feature = "runtime_async_std")]
 use async_std::{
     io,
     net::{TcpStream, ToSocketAddrs},
 };
-#[cfg(feature = "runtime_agnostic")]
+#[cfg(feature = "runtime_async_std")]
 use futures::{AsyncReadExt, AsyncWriteExt};
 
 #[cfg(feature = "runtime_tokio")]
@@ -37,6 +37,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 
 ///A connection to Redis. Copying is cheap as the inner type is a simple, futures-aware, `Arc<Mutex>`, and will
 ///not create a new connection. Use a [`ConnectionPool`](crate::ConnectionPool) if you want to use pooled conections.
+///Alternatively, there's the `deadpool-darkredis` crate.
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
 ///Check the [redis command reference](https://redis.io/commands) for in-depth explanations of each command.
 #[derive(Clone)]
@@ -46,21 +47,27 @@ pub struct Connection {
 
 impl Connection {
     ///Connect to a Redis instance running at `address`. If you wish to name this connection, run the [`CLIENT SETNAME`](https://redis.io/commands/client-setname) command.
-    pub async fn connect<A, P>(address: A, password: Option<P>) -> Result<Self>
+    pub async fn connect<A>(address: A) -> Result<Self>
     where
         A: ToSocketAddrs,
-        P: AsRef<[u8]>,
     {
         let stream = Arc::new(Mutex::new(
             TcpStream::connect(address)
                 .await
                 .map_err(Error::ConnectionFailed)?,
         ));
-        let mut out = Self { stream };
 
-        if let Some(pass) = password {
-            out.run_command(Command::new("AUTH").arg(&pass)).await?;
-        }
+        Ok(Self { stream })
+    }
+
+    ///Connect to a Redis instance running at `address`, and authenticate using `password`.
+    pub async fn connect_and_auth<A, P>(address: A, password: P) -> Result<Self>
+    where
+        A: ToSocketAddrs,
+        P: AsRef<[u8]>,
+    {
+        let mut out = Self::connect(address).await?;
+        out.run_command(Command::new("AUTH").arg(&password)).await?;
 
         Ok(out)
     }

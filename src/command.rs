@@ -9,7 +9,7 @@ use std::io::Write;
 ///# use darkredis::*;
 ///# #[tokio::main]
 ///# async fn main() {
-///# let mut connection = Connection::connect("127.0.0.1:6379", None).await.unwrap();
+///# let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
 ///# connection.del("pipelined-list").await.unwrap();
 ///
 /// let command = CommandList::new("LPUSH").arg(b"pipelined-list").arg(b"bar")
@@ -126,7 +126,7 @@ impl<'a> CommandList<'a> {
 ///# use darkredis::*;
 ///# #[tokio::main]
 ///# async fn main() {
-///# let mut connection = Connection::connect("127.0.0.1:6379", None).await.unwrap();
+///# let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
 ///# connection.del("singular-key").await.unwrap();
 ///
 ///let command = Command::new("SET").arg(b"singular-key").arg(b"some-value");

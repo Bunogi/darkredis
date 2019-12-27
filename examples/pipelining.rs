@@ -3,7 +3,7 @@ use futures::StreamExt;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut connection = Connection::connect("127.0.0.1:6379", None).await?;
+    let mut connection = Connection::connect("127.0.0.1:6379").await?;
 
     //Create a list of commands to be executed. In addition to the builder-style seen here, you could
     //also prefix the functions with `append`. This would mutate the CommandList object without

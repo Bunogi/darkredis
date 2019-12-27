@@ -4,4 +4,8 @@
 This crate contains the code necesarry to use [`darkredis`](crates.io/crates/darkredis) with [`deadpool`](https://crates.io/crates/deadpool).
 
 # NOTE
-Trying to use `deadpool-darkredis` with the `runtime_agnostic` feature will result in a compile error, due to it's version of `ToSocketAddrs` missing a `Send` implementation.
+Trying to use `deadpool-darkredis` with the `runtime_async_std` feature will result in a compile error, due to it's version of `ToSocketAddrs` missing a `Send` implementation.
+
+# Changelog
+## 0.6.0
+Initial release

@@ -6,7 +6,7 @@ use futures::{
 };
 use std::{pin::Pin, sync::Arc};
 
-#[cfg(feature = "runtime_agnostic")]
+#[cfg(feature = "runtime_async_std")]
 use async_std::net::TcpStream;
 #[cfg(feature = "runtime_tokio")]
 use tokio::net::TcpStream;

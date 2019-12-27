@@ -11,7 +11,7 @@ When `darkredis` was originally written, it was part of an async project. At the
 
 # Cargo features
  - `runtime_tokio`(on by default): Use the tokio 0.2 runtime and Tcp primitives. Requires a running tokio 0.2 runtime.
- - `runtime_agonic`: Use `async-std` instead of tokio, allowing you to use other runtimes than tokio. Is mutually exclusive with the `runtime_tokio` feature.
+ - `runtime_async_std`: Use `async-std` instead of tokio, using it's runtime instead of tokio. Is mutually exclusive with the `runtime_tokio` feature.
 
 # Getting started
 - Add `darkredis` and to your `Cargo.toml`.
@@ -40,7 +40,13 @@ async fn main() -> darkredis::Result<()> {
 
 # Changelog
 ## 0.6.0
+### Breaking changes
 - Change `run_commands` to return a stream.
+- Rename `runtime_agnostic` feature to `runtime_async_std`
+- Split `Connection::connect` into one which authenticates and one which doesn't.
+- Connection password now takes `AsRef<[u8]>` instead of forcing a string.
+### Additions
+- Add integration with `deadpool`
 ## 0.5.2
 - Improve serialization performance by 50%! 🎉
 - Add benchmarks
@@ -89,4 +95,4 @@ async fn main() -> darkredis::Result<()> {
 # Testing
 If you're hacking on `darkredis` and want to run the tests, make sure you have a Redis instance running on your local machine on port 6379. The tests clean up any keys set by themselves, unless the test fails. Please submit an issue if it does not.
 
-Also, make sure to run the tests using both the `runtime_tokio` and `runtime_agnostic` features, to make sure that it works.
+Also, make sure to run the tests using both the `runtime_tokio` and `runtime_async_std` features, to make sure that it works.

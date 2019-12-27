@@ -1,6 +1,5 @@
 use crate::{Command, Connection, Result};
 use futures::lock::{Mutex, MutexGuard};
-use std::ops::Deref;
 use std::sync::Arc;
 
 ///A connection pool. Clones are cheap and is the expected way to send the pool around your application.
@@ -46,7 +45,11 @@ impl ConnectionPool {
         };
 
         for i in 0..connection_count {
-            let mut conn = Connection::connect(out.address.as_ref(), password).await?;
+            let mut conn = if let Some(p) = password {
+                Connection::connect_and_auth(out.address.as_ref(), p).await?
+            } else {
+                Connection::connect(out.address.as_ref()).await?
+            };
             let client_name = format!("{}-{}", name, i + 1);
             conn.run_command(Command::new("CLIENT").arg(b"SETNAME").arg(&client_name))
                 .await?;
@@ -75,11 +78,11 @@ impl ConnectionPool {
     where
         N: Into<Option<&'a str>>,
     {
-        let mut out = Connection::connect(
-            self.address.as_ref(),
-            self.password.as_ref().map(|p| p.deref().as_str()),
-        )
-        .await?;
+        let mut out = if let Some(p) = &self.password {
+            Connection::connect_and_auth(self.address.as_ref(), p.as_bytes()).await?
+        } else {
+            Connection::connect(self.address.as_ref()).await?
+        };
         let name = name.into().unwrap_or("spawned_connection");
         let name = format!("{}-{}", self.name, name);
         let command = Command::new("CLIENT").arg(&"SETNAME").arg(&name);

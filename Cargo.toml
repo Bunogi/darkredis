@@ -17,7 +17,7 @@ repository = "https://github.com/Bunogi/darkredis"
 [features]
 default = ["runtime_tokio"]
 runtime_tokio = ["tokio"]
-runtime_agnostic = ["async-std"]
+runtime_async_std = ["async-std"]
 # Compile benchmark-specific functions. You should NOT set this yourself, because
 # it re-exports pub(crate) functions as pub, which changes the API. The API exposed
 # by this feature will never be considered stable.

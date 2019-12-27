@@ -16,21 +16,22 @@
 //! # }
 //! ```
 
-#[cfg(all(feature = "runtime_tokio", feature = "runtime_agnostic"))]
-compile_error!("The `runtime_tokio` and `runtime_agnostic` features are mutually exclusive!");
+#[cfg(all(feature = "runtime_tokio", feature = "runtime_async_std"))]
+compile_error!("The `runtime_tokio` and `runtime_async_std` features are mutually exclusive!");
 
-#[cfg(not(any(feature = "runtime_tokio", feature = "runtime_agnostic")))]
-compile_error!("Expected one of the features `runtime_tokio` and `runtime_agnostic`");
+#[cfg(not(any(feature = "runtime_tokio", feature = "runtime_async_std")))]
+compile_error!("Expected one of the features `runtime_tokio` and `runtime_async_std`");
 
 #[macro_use]
 extern crate quick_error;
 
 mod command;
 mod connection;
+mod connectionpool;
 mod error;
 
 ///Export the ToSocketAddrs trait to be used for deadpool-darkredis. You probably won't need this unless you're implementing an adapter crate for a different connection pool.
-#[cfg(feature = "runtime_agnostic")]
+#[cfg(feature = "runtime_async_std")]
 pub use async_std::net::ToSocketAddrs;
 #[cfg(feature = "runtime_tokio")]
 pub use tokio::net::ToSocketAddrs;
@@ -45,6 +46,7 @@ pub use command::{Command, CommandList};
 pub use connection::{
     Connection, Message, MessageStream, PMessage, PMessageStream, ResponseStream,
 };
+pub use connectionpool::ConnectionPool;
 pub use error::Error;
 
 ///Result type used in the whole crate.
