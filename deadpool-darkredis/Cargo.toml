@@ -1,0 +1,13 @@
+[package]
+name = "deadpool-darkredis"
+version = "0.6.0-dev"
+authors = ["Håkon Jordet <haakon.jordet@gmail.com>"]
+edition = "2018"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.21"
+deadpool = "0.4.3"
+darkredis = { path = "../", version = "0.6.0-dev", default-features = false }

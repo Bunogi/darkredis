@@ -46,9 +46,10 @@ pub struct Connection {
 
 impl Connection {
     ///Connect to a Redis instance running at `address`. If you wish to name this connection, run the [`CLIENT SETNAME`](https://redis.io/commands/client-setname) command.
-    pub async fn connect<A>(address: A, password: Option<&str>) -> Result<Self>
+    pub async fn connect<A, P>(address: A, password: Option<P>) -> Result<Self>
     where
         A: ToSocketAddrs,
+        P: AsRef<[u8]>,
     {
         let stream = Arc::new(Mutex::new(
             TcpStream::connect(address)
@@ -166,6 +167,11 @@ impl Connection {
         lock.write_all(&buffer).await?;
 
         Ok(ResponseStream::new(command_count, self.stream.clone()))
+    }
+
+    ///Send a `PING` to the server, returning Ok(()) on success.
+    pub async fn ping(&mut self) -> Result<()> {
+        self.run_command(Command::new("PING")).await.map(|_| ())
     }
 
     ///Consume `self`, and subscribe to `channels`, returning a stream of [`Message`s](stream::Message). As of now, there's no way to get the connection back, nor change the subscribed topics.

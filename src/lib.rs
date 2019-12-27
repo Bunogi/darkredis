@@ -27,8 +27,13 @@ extern crate quick_error;
 
 mod command;
 mod connection;
-mod connectionpool;
 mod error;
+
+///Export the ToSocketAddrs trait to be used for deadpool-darkredis. You probably won't need this unless you're implementing an adapter crate for a different connection pool.
+#[cfg(feature = "runtime_agnostic")]
+pub use async_std::net::ToSocketAddrs;
+#[cfg(feature = "runtime_tokio")]
+pub use tokio::net::ToSocketAddrs;
 
 #[cfg(feature = "bench")]
 pub mod test;
@@ -40,7 +45,6 @@ pub use command::{Command, CommandList};
 pub use connection::{
     Connection, Message, MessageStream, PMessage, PMessageStream, ResponseStream,
 };
-pub use connectionpool::ConnectionPool;
 pub use error::Error;
 
 ///Result type used in the whole crate.
