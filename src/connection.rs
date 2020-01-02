@@ -36,7 +36,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 }
 
 ///A connection to Redis. Copying is cheap as the inner type is a simple, futures-aware, `Arc<Mutex>`, and will
-///not create a new connection. Use a [`ConnectionPool`](crate::ConnectionPool) if you want to use pooled conections.
+///not create a new connection. Use a [`ConnectionPool`](struct.ConnectionPool.html) if you want to use pooled conections.
 ///Alternatively, there's the `deadpool-darkredis` crate.
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
 ///Check the [redis command reference](https://redis.io/commands) for in-depth explanations of each command.
@@ -181,8 +181,8 @@ impl Connection {
         self.run_command(Command::new("PING")).await.map(|_| ())
     }
 
-    ///Consume `self`, and subscribe to `channels`, returning a stream of [`Message`s](stream::Message). As of now, there's no way to get the connection back, nor change the subscribed topics.
-    pub async fn subscribe<K>(mut self, channels: &[K]) -> Result<stream::MessageStream>
+    ///Consume `self`, and subscribe to `channels`, returning a stream of [`Message's`](struct.Message.html). As of now, there's no way to get the connection back, nor change the subscribed topics.
+   pub async fn subscribe<K>(mut self, channels: &[K]) -> Result<stream::MessageStream>
     where
         K: AsRef<[u8]>,
     {
@@ -204,7 +204,7 @@ impl Connection {
         Ok(stream::MessageStream::new(self))
     }
 
-    ///Exactly like [`subscribe`](Connection::subscribe), but subscribe to patterns instead.
+    ///Exactly like [`subscribe`](struct.Connection.html#method.subscribe), but subscribe to patterns instead.
     pub async fn psubscribe<K>(mut self, patterns: &[K]) -> Result<stream::PMessageStream>
     where
         K: AsRef<[u8]>,
@@ -396,7 +396,7 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like [`lpush`](Connection::lpush), but push multiple values.
+    ///Like [`lpush`](struct.Connection.html#method.lpush), but push multiple values.
     pub async fn lpush_slice<K, V>(&mut self, key: K, data: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -420,7 +420,7 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like [`rpush`](Connection::rpush), but push multiple values through a slice.
+    ///Like [`rpush`](struct.Connection.html#method.rpush), but push multiple values through a slice.
     pub async fn rpush_slice<K, V>(&mut self, key: K, values: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -688,7 +688,7 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like [`sadd`](Connection::sadd), but push multiple values.
+    ///Like [`sadd`](struct.Connection.html#method.sadd), but push multiple values.
     pub async fn sadd_slice<K, V>(&mut self, key: K, values: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,

@@ -72,7 +72,7 @@ impl Stream for ValueStream {
     }
 }
 
-///A stream of [`Message`s](Message). The stream will end if an error is encountered, if the logging feature is enabled. Requires a logger compatible with the [`log`](https://crates.io/crates/log) crate.
+///A stream of [`Message`s](struct.Message.html). The stream will end if an error is encountered, if the logging feature is enabled. Requires a logger compatible with the [`log`](https://crates.io/crates/log) crate.
 #[must_use = "No messages will be received if left unused"]
 pub struct MessageStream {
     inner: Pin<Box<ValueStream>>,
@@ -105,7 +105,7 @@ impl Stream for MessageStream {
     }
 }
 
-///A stream of [`PMessage`s](PMessage). See [`MessageStream`](MessageStream) for more info.
+///A stream of [`PMessage`s](struct.PMessage.html). See [`MessageStream`](struct.MessageStream.html) for more info.
 #[must_use = "No messages will be received if left unused"]
 pub struct PMessageStream {
     inner: Pin<Box<ValueStream>>,
