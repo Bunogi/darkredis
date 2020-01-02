@@ -1,7 +1,7 @@
 use std::io::Write;
 
 ///A struct for defining commands manually, which allows for pipelining of several commands. If you need
-///to only run one command, use [`Command`](crate::Command), which has almost the same API.
+///to only run one command, use [`Command`](struct.Command.html), which has almost the same API.
 ///# Example
 /// ```
 ///use darkredis::{CommandList, Connection};
@@ -33,9 +33,9 @@ impl<'a> CommandList<'a> {
     }
 
     ///Consumes the command and appends an argument to it, builder style. Note that this will NOT create a new
-    ///command for pipelining. That's what [`Commandlist::command`](crate::CommandList::command) is for.
+    ///command for pipelining. That's what [`Commandlist::command`](struct.CommandList.html#method.command) is for.
     ///# See also
-    ///[`append_arg`](CommandList::append_arg)
+    ///[`append_arg`](struct.CommandList.html#method.append_arg)
     pub fn arg<D>(mut self, data: &'a D) -> Self
     where
         D: AsRef<[u8]>,
@@ -46,7 +46,7 @@ impl<'a> CommandList<'a> {
 
     ///Add multiple arguments from a slice, builder-style.
     ///# See also
-    ///[`append_args`](CommandList::append_args)
+    ///[`append_args`](struct.CommandList.html#method.append_args)
     pub fn args<D>(mut self, arguments: &'a [D]) -> Self
     where
         D: AsRef<[u8]>,
@@ -58,7 +58,7 @@ impl<'a> CommandList<'a> {
     ///Add a command to be executed in a pipeline, builder-style. Calls to `Command::arg` will add arguments from
     ///now on.
     ///# See also
-    ///[`append_command`](CommandList::append_command)
+    ///[`append_command`](struct.CommandList.html#method.append_command)
     pub fn command(mut self, cmd: &'a str) -> Self {
         self.commands.push(Command::new(cmd));
         self
@@ -66,7 +66,7 @@ impl<'a> CommandList<'a> {
 
     ///Append arguments from a slice.
     ///# See also
-    ///[`args`](CommandList::args)
+    ///[`args`](struct.CommandList.html#method.args)
     pub fn append_args<D>(&mut self, arguments: &'a [D])
     where
         D: AsRef<[u8]>,
@@ -79,7 +79,7 @@ impl<'a> CommandList<'a> {
 
     ///Mutate `self` by adding an additional argument.
     ///# See also
-    ///[`arg`](CommandList::arg)
+    ///[`arg`](struct.CommandList.html#method.arg)
     pub fn append_arg<D>(&mut self, data: &'a D)
     where
         D: AsRef<[u8]>,
@@ -89,7 +89,7 @@ impl<'a> CommandList<'a> {
 
     ///Append a new command to `self`.
     ///# See also
-    ///[`command`](CommandList::command)
+    ///[`command`](struct.CommandList.html#method.command)
     pub fn append_command(&mut self, cmd: &'a str) {
         self.commands.push(Command::new(cmd))
     }
@@ -119,7 +119,7 @@ impl<'a> CommandList<'a> {
     }
 }
 
-///A struct for defining commands manually. If you want to run multiple commands in a pipeline, use [`CommandList`](crate::CommandList).
+///A struct for defining commands manually. If you want to run multiple commands in a pipeline, use [`CommandList`](struct.CommandList.html).
 ///# Example
 /// ```
 ///use darkredis::{Command, Connection};
@@ -153,7 +153,7 @@ impl<'a> Command<'a> {
 
     ///Append an argument to this command, builder-style.
     ///# See also
-    ///[`append_arg`](Command::append_arg)
+    ///[`append_arg`](struct.Command.html#method.append_arg)
     pub fn arg<D>(mut self, data: &'a D) -> Self
     where
         D: AsRef<[u8]>,
@@ -164,7 +164,7 @@ impl<'a> Command<'a> {
 
     ///Add multiple arguments to a command in slice form.
     ///# See also
-    ///[`append_args`](Command::append_args)
+    ///[`append_args`](struct.Command.html#method.append_args)
     pub fn args<D>(mut self, arguments: &'a [D]) -> Self
     where
         D: AsRef<[u8]>,
@@ -176,7 +176,7 @@ impl<'a> Command<'a> {
 
     ///Append an argument to `self`.
     ///# See also
-    ///[`arg`](Command::append_arg)
+    ///[`arg`](struct.Command.html#method.append_arg)
     pub fn append_arg<D>(&mut self, data: &'a D)
     where
         D: AsRef<[u8]>,
@@ -186,7 +186,7 @@ impl<'a> Command<'a> {
 
     ///Append multiple arguments to `self`.
     ///# See also
-    ///[`args`](Command::args)
+    ///[`args`](struct.Command.html#method.args)
     pub fn append_args<D>(&mut self, arguments: &'a [D])
     where
         D: AsRef<[u8]>,

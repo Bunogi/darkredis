@@ -68,9 +68,9 @@ pub enum Value {
 }
 
 impl Value {
-    ///Returns the inner `isize` of a [`Value::Integer`](crate::Value::Integer).
+    ///Returns the inner `isize` of a [`Value::Integer`](enum.Value.html#Integer.v).
     ///# Panics
-    ///Panics if `self` is not a [`Value::Integer`](crate::Value::Integer)
+    ///Panics if `self` is not a [`Value::Integer`](enum.Value.html#Integer.v)
     #[inline]
     pub fn unwrap_integer(self) -> isize {
         if let Value::Integer(i) = self {
@@ -82,7 +82,7 @@ impl Value {
 
     ///Returns the inner `Vec<Value>` of a `Value::Array`.
     ///# Panics
-    ///Panics if `self` is not a [`Value::Array`](crate::Value::Array)
+    ///Panics if `self` is not a [`Value::Array`](enum.Value.html#Array.v)
     #[inline]
     pub fn unwrap_array(self) -> Vec<Value> {
         if let Value::Array(a) = self {
@@ -92,9 +92,9 @@ impl Value {
         }
     }
 
-    ///Returns the inner `Vec<u8>` of a [`Value::String`](crate::Value::String).
+    ///Returns the inner `Vec<u8>` of a [`Value::String`](enum.Value.html#String.v).
     ///# Panics
-    ///Panics if `self` is not a [`Value::String`](crate::Value::String)
+    ///Panics if `self` is not a [`Value::String`](enum.Value.html#String.v)
     #[inline]
     pub fn unwrap_string(self) -> Vec<u8> {
         if let Value::String(s) = self {
