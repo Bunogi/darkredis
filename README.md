@@ -46,6 +46,7 @@ async fn main() -> darkredis::Result<()> {
 - Split `Connection::connect` into one which authenticates and one which doesn't.
 - Connection password now takes `AsRef<[u8]>` instead of forcing a string.
 - Remove deprecated function `set_with_expiry`
+- Change `MSET` to use the new `MSetBuilder` struct
 ### Additions
 - Hashmap convenience functions
 - Add some convenience functions for sets

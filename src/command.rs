@@ -1,3 +1,4 @@
+use crate::connection::builder::MSetBuilder;
 use std::io::Write;
 
 ///A struct for defining commands manually, which allows for pipelining of several commands. If you need
@@ -212,6 +213,12 @@ impl<'a> Command<'a> {
             }
             buffer.push(b'\r');
             buffer.push(b'\n');
+        }
+    }
+
+    pub(crate) fn append_msetbuilder(&mut self, builder: &'a MSetBuilder<'a>) {
+        for item in builder.build() {
+            self.args.push(*item);
         }
     }
 }

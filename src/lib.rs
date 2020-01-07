@@ -46,7 +46,8 @@ mod test;
 
 pub use command::{Command, CommandList};
 pub use connection::{
-    Connection, Message, MessageStream, PMessage, PMessageStream, ResponseStream,
+    builder::MSetBuilder, Connection, Message, MessageStream, PMessage, PMessageStream,
+    ResponseStream,
 };
 pub use connectionpool::ConnectionPool;
 pub use error::Error;

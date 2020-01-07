@@ -234,20 +234,13 @@ async fn mget_mset() {
     redis_test!(
         redis,
         {
-            //Verify that it works with trait objects
-            let keys: Vec<&(dyn AsRef<[u8]> + Sync)> = vec![&"key1", &b"key2"];
-            let values: Vec<&(dyn AsRef<[u8]> + Sync)> = vec![&"value1", &b"value2"];
-            redis.mset(&keys, &values).await.unwrap();
-
-            let simple_keys = vec!["key1", "key2", "key3"];
-            let simple_values = vec!["value1", "value2"];
-            redis
-                .mset(simple_keys.as_slice(), simple_values.as_slice())
-                .await
-                .unwrap();
+            let builder = MSetBuilder::new()
+                .set(b"key1", b"value1")
+                .set(b"key2", b"value2");
+            redis.mset(builder).await.unwrap();
 
             assert_eq!(
-                redis.mget(&simple_keys).await.unwrap(),
+                redis.mget(&["key1", "key2", "key3"]).await.unwrap(),
                 vec![Some(b"value1".to_vec()), Some(b"value2".to_vec()), None]
             );
 
@@ -301,13 +294,11 @@ async fn hash_sets() {
             assert!(vals.contains(&Value::String(b"Hello".to_vec())));
             assert!(vals.contains(&Value::String(b"10.5".to_vec())));
 
-            assert_eq!(
-                redis
-                    .hset_slice(&key, &[b"field3", b"field4"], &[b"foo", b"bar"])
-                    .await
-                    .unwrap(),
-                2
-            );
+            let builder = MSetBuilder::new()
+                .set(b"field3", b"foo")
+                .set(b"field4", b"bar");
+
+            assert_eq!(redis.hset_many(&key, builder).await.unwrap(), 2);
             assert_eq!(
                 redis
                     .hdel_slice(&key, &[b"field3", b"field4"])

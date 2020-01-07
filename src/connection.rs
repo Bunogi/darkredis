@@ -17,8 +17,11 @@ use tokio::{
 
 use std::sync::Arc;
 
+pub mod builder;
 pub mod stream;
 pub use stream::{Message, MessageStream, PMessage, PMessageStream, ResponseStream};
+
+use builder::MSetBuilder;
 
 #[cfg(test)]
 mod test;
@@ -280,25 +283,18 @@ impl Connection {
             .map(|v| v.unwrap_bool())
     }
 
-    ///Set each field in `fields` to the corresponding value in `values` in
-    ///the hash set stored in `key`
+    ///Set fields in the hash set at `key` to their values in `builder`. See
+    ///[`Connection::mset`](struct.Connection.html#method.mset) for more information.
     ///# Return value
-    ///The number of added fields
-    pub async fn hset_slice<K, F, V>(&mut self, key: K, fields: &[F], values: &[V]) -> Result<isize>
+    ///The number of added fields.
+    pub async fn hset_many<K>(&mut self, key: K, builder: MSetBuilder<'_>) -> Result<isize>
     where
         K: AsRef<[u8]>,
-        F: AsRef<[u8]>,
-        V: AsRef<[u8]>,
     {
-        let args: Vec<&[u8]> = fields
-            .iter()
-            .zip(values.iter())
-            .flat_map(|(key, value)| vec![key.as_ref(), value.as_ref()].into_iter())
-            .collect();
+        let mut command = Command::new("HSET").arg(&key);
+        command.append_msetbuilder(&builder);
 
-        self.run_command(Command::new("HSET").arg(&key).args(&args))
-            .await
-            .map(|v| v.unwrap_integer())
+        self.run_command(command).await.map(|v| v.unwrap_integer())
     }
 
     ///Increment `field` in the hash set `key` by `val`.
@@ -530,12 +526,23 @@ impl Connection {
 
     ///Delete `key`.
     ///# Return value
-    ///The number of deleted keys
+    ///The number of deleted keys.
     pub async fn del<K>(&mut self, key: K) -> Result<isize>
     where
         K: AsRef<[u8]>,
     {
         let command = Command::new("DEL").arg(&key);
+        self.run_command(command).await.map(|i| i.unwrap_integer())
+    }
+
+    ///Delete every element in `keys`.
+    ///# Return value
+    ///The number of deleted keys
+    pub async fn del_slice<K>(&mut self, keys: &[K]) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        let command = Command::new("DEL").args(&keys);
         self.run_command(command).await.map(|i| i.unwrap_integer())
     }
 
@@ -817,18 +824,36 @@ impl Connection {
         Ok(output)
     }
 
-    ///Set multiple keys at once. If the number of keys and values are not equal, set all keys that have values and vice versa.
-    pub async fn mset<K, V>(&mut self, keys: &[K], values: &[V]) -> Result<()>
-    where
-        K: AsRef<[u8]>,
-        V: AsRef<[u8]>,
-    {
-        let args: Vec<&[u8]> = keys
-            .iter()
-            .zip(values.iter())
-            .flat_map(|(key, value)| vec![key.as_ref(), value.as_ref()].into_iter())
-            .collect();
-        let command = Command::new("MSET").args(&args);
+    ///Set every key in `builder` to their respective values.
+    ///# Example
+    ///```
+    /// use darkredis::{Connection, MSetBuilder};
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+    /// let builder = MSetBuilder::new()
+    ///     .set(b"multi-key-1", b"foo")
+    ///     .set(b"multi-key-2", b"bar")
+    ///     .set(b"multi-key-3", b"baz");
+    /// connection.mset(builder).await.unwrap();
+    /// let keys = &[b"multi-key-1", b"multi-key-2", b"multi-key-3"];
+    /// let results = connection.mget(keys).await.unwrap();
+    /// assert_eq!(
+    ///     results,
+    ///     vec![
+    ///         Some(b"foo".to_vec()),
+    ///         Some(b"bar".to_vec()),
+    ///         Some(b"baz".to_vec())
+    ///     ]
+    /// );
+    /// # connection.del_slice(keys).await.unwrap();
+    /// # }
+    ///```
+
+    pub async fn mset(&mut self, builder: MSetBuilder<'_>) -> Result<()>
+where {
+        let mut command = Command::new("MSET");
+        command.append_msetbuilder(&builder);
         self.run_command(command).await?;
         Ok(())
     }
