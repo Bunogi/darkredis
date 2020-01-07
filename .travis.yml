@@ -7,8 +7,7 @@ services:
   - redis-server
 script:
   - cargo test --workspace
-  #TODO: Reenable when a solution has been found to the compilation error
-  #- cargo test --workspace --no-default-features --features=runtime_async_std
+  - cargo test --no-default-features --features=runtime_async_std
 jobs:
   allow_failures:
     - rust: nightly
