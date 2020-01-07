@@ -42,7 +42,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 ///not create a new connection. Use a [`ConnectionPool`](struct.ConnectionPool.html) if you want to use pooled conections.
 ///Alternatively, there's the `deadpool-darkredis` crate.
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
-///Check the [redis command reference](https://redis.io/commands) for in-depth explanations of each command.
+///Check the [Redis command reference](https://redis.io/commands) for in-depth explanations of each command.
 #[derive(Clone, Debug)]
 pub struct Connection {
     pub(crate) stream: Arc<Mutex<TcpStream>>,
@@ -167,8 +167,8 @@ impl Connection {
         self.run_command_with_buffer(command, &mut buffer).await
     }
 
-    ///Run a single command on this connection, using `buffer` for serializtion.
-    ///See [`run_commands_with_buffer`](struct.Command.html#run_commands_with_buffer) for more details.
+    ///Run a single command on this connection, using `buffer` for serialization.
+    ///See [`run_commands_with_buffer`](struct.Connection.html#method.run_commands_with_buffer) for more details.
     pub async fn run_command_with_buffer(
         &mut self,
         command: Command<'_>,
@@ -394,7 +394,8 @@ impl Connection {
         Ok(stream::MessageStream::new(self))
     }
 
-    ///Exactly like [`subscribe`](struct.Connection.html#method.subscribe), but subscribe to patterns instead.
+    ///Exactly like [`subscribe`](struct.Connection.html#method.subscribe), but subscribe to channels
+    ///matching patterns instead.
     pub async fn psubscribe<K>(mut self, patterns: &[K]) -> Result<stream::PMessageStream>
     where
         K: AsRef<[u8]>,
@@ -417,7 +418,9 @@ impl Connection {
         Ok(stream::PMessageStream::new(self))
     }
 
-    ///Publish `message` to `channel`. Returns how many clients received the message.
+    ///Publish `message` to `channel`.
+    ///# Return Value
+    ///Returns how many clients received the message.
     pub async fn publish<C, M>(&mut self, channel: C, message: M) -> Result<isize>
     where
         C: AsRef<[u8]>,
@@ -427,7 +430,7 @@ impl Connection {
         self.run_command(command).await.map(|i| i.unwrap_integer())
     }
 
-    ///Sets `key` to `value`.
+    ///Set `key` to `value`.
     pub async fn set<K, D>(&mut self, key: K, value: D) -> Result<()>
     where
         K: AsRef<[u8]>,
@@ -502,7 +505,7 @@ impl Connection {
         self.run_command(command).await.map(|i| i.unwrap_integer())
     }
 
-    ///Set `key` to expire at unix timestamp `timestamp`, measured in seconds.
+    ///Set `key` to expire at Unix timestamp `timestamp`, measured in seconds.
     pub async fn expire_at_seconds<K>(&mut self, key: K, timestamp: u64) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -513,7 +516,7 @@ impl Connection {
         self.run_command(command).await.map(|i| i.unwrap_integer())
     }
 
-    ///Set `key` to expire at unix timestamp `timestamp`, measured in milliseconds.
+    ///Set `key` to expire at Unix timestamp `timestamp`, measured in milliseconds.
     pub async fn expire_at_ms<K>(&mut self, key: K, timestamp: u64) -> Result<isize>
     where
         K: AsRef<[u8]>,

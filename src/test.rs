@@ -52,7 +52,7 @@ macro_rules! redis_test {
 }
 
 #[macro_export]
-///Defines a redis test but in a way that is appropriate for a doc test. Does NOT do housekeeping and therefore does not clean up after itself.
+///Defines a Redis test but in a way that is appropriate for a doc test. Does NOT do housekeeping and therefore does not clean up after itself.
 macro_rules! redis_doc_test {
     ($redis:ident, $block:tt) => {
         let mut $redis = Connection::connect(TEST_ADDRESS, None).await.unwrap();
