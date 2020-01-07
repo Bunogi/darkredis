@@ -50,6 +50,7 @@ async fn main() -> darkredis::Result<()> {
 - Add integration with `deadpool`
 - Hashmap convenience functions
 - Add some convenience functions for sets
+- Allow running commands using a pre-allocated serialization buffer
 ## 0.5.2
 - Improve serialization performance by 50%! 🎉
 - Add benchmarks

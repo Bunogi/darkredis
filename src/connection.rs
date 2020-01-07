@@ -157,21 +157,48 @@ impl Connection {
     }
 
     ///Run a single command on this connection.
+    #[inline]
     pub async fn run_command(&mut self, command: Command<'_>) -> Result<Value> {
-        let mut stream = self.stream.lock().await;
         let mut buffer = Vec::new();
-        command.serialize(&mut buffer);
+
+        self.run_command_with_buffer(command, &mut buffer).await
+    }
+
+    ///Run a single command on this connection, using `buffer` for serializtion.
+    ///See [`run_commands_with_buffer`](struct.Command.html#run_commands_with_buffer) for more details.
+    pub async fn run_command_with_buffer(
+        &mut self,
+        command: Command<'_>,
+        buffer: &mut Vec<u8>,
+    ) -> Result<Value> {
+        let mut stream = self.stream.lock().await;
+        command.serialize(buffer);
         stream.write_all(&buffer).await?;
 
         Ok(Self::read_value(&mut stream).await?)
     }
 
     ///Run a series of commands on this connection, returning a stream of the results.
+    #[inline]
     pub async fn run_commands(&mut self, command: CommandList<'_>) -> Result<ResponseStream> {
+        let mut buffer = Vec::new();
+        self.run_commands_with_buffer(command, &mut buffer).await
+    }
+
+    ///Run a series of commands on this connection, using `buffer` for serialization.
+    ///This prevents allocations as long as `buffer` is large enough from before. The
+    ///buffer will be empty when this function returns.
+    pub async fn run_commands_with_buffer(
+        &mut self,
+        command: CommandList<'_>,
+        buf: &mut Vec<u8>,
+    ) -> Result<ResponseStream> {
+        buf.clear();
         let mut lock = self.stream.lock().await;
         let command_count = command.command_count();
-        let buffer = command.serialize();
-        lock.write_all(&buffer).await?;
+        command.serialize(buf);
+        lock.write_all(&buf).await?;
+        buf.clear();
 
         Ok(ResponseStream::new(command_count, self.stream.clone()))
     }

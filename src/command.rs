@@ -100,13 +100,10 @@ impl<'a> CommandList<'a> {
     }
 
     //Convert to redis protocol encoding
-    pub(crate) fn serialize(self) -> Vec<u8> {
-        let mut out = Vec::new();
+    pub(crate) fn serialize(self, buffer: &mut Vec<u8>) {
         for command in self.commands {
-            command.serialize(&mut out);
+            command.serialize(buffer);
         }
-
-        out
     }
 }
 
@@ -245,13 +242,14 @@ mod test {
 
     #[test]
     fn serialize_multiple() {
-        let command = CommandList::new("GET")
+        let mut buf = Vec::new();
+        CommandList::new("GET")
             .arg(b"some-key")
             .command("LLEN")
             .arg(b"some-other-key")
-            .serialize();
+            .serialize(&mut buf);
         assert_eq!(
-            String::from_utf8_lossy(&command),
+            String::from_utf8_lossy(&buf),
             "*2\r\n$3\r\nGET\r\n$8\r\nsome-key\r\n*2\r\n$4\r\nLLEN\r\n$14\r\nsome-other-key\r\n"
         );
     }
