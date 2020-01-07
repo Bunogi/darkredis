@@ -47,10 +47,10 @@ async fn main() -> darkredis::Result<()> {
 - Connection password now takes `AsRef<[u8]>` instead of forcing a string.
 - Remove deprecated function `set_with_expiry`
 ### Additions
-- Add integration with `deadpool`
 - Hashmap convenience functions
 - Add some convenience functions for sets
 - Allow running commands using a pre-allocated serialization buffer
+- Most types now implement `Debug`
 ## 0.5.2
 - Improve serialization performance by 50%! 🎉
 - Add benchmarks

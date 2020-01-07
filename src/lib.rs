@@ -1,4 +1,6 @@
 #![cfg_attr(not(feature = "bench"), warn(missing_docs))]
+#![warn(missing_debug_implementations)]
+#![deny(unsafe_code)]
 
 //! Asyncronous redis client built using futures and async await, with optional connection pooling.
 //! ```

@@ -20,7 +20,7 @@ use std::io::Write;
 ///# connection.del("pipelined-list").await.unwrap();
 ///# }
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CommandList<'a> {
     commands: Vec<Command<'a>>,
 }
@@ -133,7 +133,7 @@ impl<'a> CommandList<'a> {
 ///# connection.del("singular-key").await.unwrap();
 ///# }
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Command<'a> {
     command: &'a str,
     args: Vec<&'a [u8]>,

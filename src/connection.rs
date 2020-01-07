@@ -40,7 +40,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 ///Alternatively, there's the `deadpool-darkredis` crate.
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
 ///Check the [redis command reference](https://redis.io/commands) for in-depth explanations of each command.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Connection {
     pub(crate) stream: Arc<Mutex<TcpStream>>,
 }

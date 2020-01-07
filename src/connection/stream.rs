@@ -33,6 +33,7 @@ pub struct PMessage {
     pub pattern: Vec<u8>,
 }
 
+#[allow(missing_debug_implementations)]
 struct ValueStream {
     conn: Connection,
     poll_future: Pin<Box<dyn Future<Output = Result<Value>> + Send>>,
@@ -74,6 +75,7 @@ impl Stream for ValueStream {
 
 ///A stream of [`Message`s](struct.Message.html). The stream will end if an error is encountered, if the logging feature is enabled. Requires a logger compatible with the [`log`](https://crates.io/crates/log) crate.
 #[must_use = "No messages will be received if left unused"]
+#[allow(missing_debug_implementations)]
 pub struct MessageStream {
     inner: Pin<Box<ValueStream>>,
 }
@@ -107,6 +109,7 @@ impl Stream for MessageStream {
 
 ///A stream of [`PMessage`s](struct.PMessage.html). See [`MessageStream`](struct.MessageStream.html) for more info.
 #[must_use = "No messages will be received if left unused"]
+#[allow(missing_debug_implementations)]
 pub struct PMessageStream {
     inner: Pin<Box<ValueStream>>,
 }
@@ -146,6 +149,7 @@ impl Stream for PMessageStream {
 type ResponseFuture = Pin<Box<dyn Future<Output = Result<Value>> + Send>>;
 ///A stream of responses from a pipelined command.
 #[must_use]
+#[allow(missing_debug_implementations)]
 pub struct ResponseStream {
     expected: usize,
     received: usize,

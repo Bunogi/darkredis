@@ -3,7 +3,7 @@ use futures::lock::{Mutex, MutexGuard};
 use std::sync::Arc;
 
 ///A connection pool. Clones are cheap and is the expected way to send the pool around your application.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ConnectionPool {
     connections: Vec<Arc<Mutex<Connection>>>,
     address: Arc<String>,
