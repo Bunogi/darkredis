@@ -815,7 +815,6 @@ impl Connection {
         Ok(self.run_command(command).await? == Value::Integer(1))
     }
 
-
     ///Adds new `value` to set specified by `key`.
     pub async fn sadd<K, V>(&mut self, key: K, value: V) -> Result<isize>
     where
@@ -827,7 +826,7 @@ impl Connection {
         Ok(self.run_command(command).await?.unwrap_integer())
     }
 
-    ///Like [`sadd`](Connection::sadd), but push multiple values.
+    ///Like [`sadd`](struct.Connection.html#method.sadd), but push multiple values.
     pub async fn sadd_slice<K, V>(&mut self, key: K, values: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
@@ -841,13 +840,17 @@ impl Connection {
     /// Return the members of a set specified by `key`.
     pub async fn smembers<K>(&mut self, key: K) -> Result<Vec<Vec<u8>>>
     where
-        K: AsRef<[u8]>
+        K: AsRef<[u8]>,
     {
         let command = Command::new("SMEMBERS").arg(&key);
 
-        Ok(self.run_command(command).await?
-           .unwrap_array().into_iter()
-           .map(|s| s.unwrap_string()).collect())
+        Ok(self
+            .run_command(command)
+            .await?
+            .unwrap_array()
+            .into_iter()
+            .map(|s| s.unwrap_string())
+            .collect())
     }
 
     /// Returns `true` if `value` belongs to a set specified by `key`.

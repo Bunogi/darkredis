@@ -48,6 +48,8 @@ async fn main() -> darkredis::Result<()> {
 - Remove deprecated function `set_with_expiry`
 ### Additions
 - Add integration with `deadpool`
+- Hashmap convenience functions
+- Add some convenience functions for sets
 ## 0.5.2
 - Improve serialization performance by 50%! 🎉
 - Add benchmarks

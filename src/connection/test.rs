@@ -322,3 +322,18 @@ async fn hash_sets() {
         key
     );
 }
+
+#[tokio::test]
+async fn sets() {
+    redis_test!(
+        redis,
+        {
+            redis.sadd(&set, "foo").await.unwrap();
+            assert_eq!(redis.smembers(&set).await.unwrap(), vec![b"foo"]);
+
+            redis.sadd_slice(&set, &["bar", "baz"]).await.unwrap();
+            assert!(redis.sismember(&set, "bar").await.unwrap());
+        },
+        set
+    );
+}
