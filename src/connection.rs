@@ -15,7 +15,7 @@ use tokio::{
     net::{TcpStream, ToSocketAddrs},
 };
 
-use std::{sync::Arc, time};
+use std::sync::Arc;
 
 pub mod stream;
 pub use stream::{Message, MessageStream, PMessage, PMessageStream, ResponseStream};
@@ -174,6 +174,173 @@ impl Connection {
         lock.write_all(&buffer).await?;
 
         Ok(ResponseStream::new(command_count, self.stream.clone()))
+    }
+
+    ///Delete `field` from the hash set stored at `key`.
+    ///# Return value
+    ///`true` when the field was deleted, `false` if it didn't exist
+    pub async fn hdel<K, F>(&mut self, key: K, field: F) -> Result<bool>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HDEL").arg(&key).arg(&field))
+            .await
+            .map(|v| v.unwrap_bool())
+    }
+
+    ///Delete every field in `fields` from the hash set stored at `key`.
+    ///# Return value
+    ///The number of deleted fields
+    pub async fn hdel_slice<K, F>(&mut self, key: K, fields: &[F]) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HDEL").arg(&key).args(&fields))
+            .await
+            .map(|v| v.unwrap_integer())
+    }
+
+    ///Check if `field` exists in the hash set `key`.
+    pub async fn hexists<K, F>(&mut self, key: K, field: F) -> Result<bool>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HEXISTS").arg(&key).arg(&field))
+            .await
+            .map(|v| v.unwrap_bool())
+    }
+
+    ///Get the value of `field` in the hash set at `key`.
+    pub async fn hget<K, F>(&mut self, key: K, field: F) -> Result<Option<Vec<u8>>>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HGET").arg(&key).arg(&field))
+            .await
+            .map(|v| v.optional_string())
+    }
+
+    ///Set the value of `field` in the hash set stored at `key` to `Value`.
+    ///# Return value
+    ///The number of added fields(will be 1 if `field` was created, 0 if it already existed).
+    pub async fn hset<K, F, V>(&mut self, key: K, field: F, value: V) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+        V: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HSET").arg(&key).arg(&field).arg(&value))
+            .await
+            .map(|v| v.unwrap_integer())
+    }
+
+    ///Set the value of `field` in the hash set stored at `key` to `Value`. If `field`
+    ///already exists, do nothing.
+    ///# Return value
+    ///`true` if `field` was set, `false` otherwise.
+    pub async fn hsetnx<K, F, V>(&mut self, key: K, field: F, value: V) -> Result<bool>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+        V: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HSETNX").arg(&key).arg(&field).arg(&value))
+            .await
+            .map(|v| v.unwrap_bool())
+    }
+
+    ///Set each field in `fields` to the corresponding value in `values` in
+    ///the hash set stored in `key`
+    ///# Return value
+    ///The number of added fields
+    pub async fn hset_slice<K, F, V>(&mut self, key: K, fields: &[F], values: &[V]) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+        V: AsRef<[u8]>,
+    {
+        let args: Vec<&[u8]> = fields
+            .iter()
+            .zip(values.iter())
+            .flat_map(|(key, value)| vec![key.as_ref(), value.as_ref()].into_iter())
+            .collect();
+
+        self.run_command(Command::new("HSET").arg(&key).args(&args))
+            .await
+            .map(|v| v.unwrap_integer())
+    }
+
+    ///Increment `field` in the hash set `key` by `val`.
+    ///# Return value
+    ///The field value after the increment.
+    pub async fn hincrby<K, F>(&mut self, key: K, field: F, val: isize) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        let val = val.to_string();
+        self.run_command(Command::new("HINCRBY").arg(&key).arg(&field).arg(&val))
+            .await
+            .map(|v| v.unwrap_integer())
+    }
+
+    ///Increment `field` in the hash set `key` by `val`, floating point version.
+    ///# Return value
+    ///The field value after the increment.
+    pub async fn hincrbyfloat<K, F>(&mut self, key: K, field: F, val: f64) -> Result<f64>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        let val = val.to_string();
+        let command = Command::new("HINCRBYFLOAT").arg(&key).arg(&field).arg(&val);
+        let result = self.run_command(command).await?.unwrap_string();
+        Ok(String::from_utf8_lossy(&result).parse::<f64>().unwrap())
+    }
+
+    ///Get the name of each hash field stored at `key`.
+    pub async fn hkeys<K>(&mut self, key: K) -> Result<Vec<Vec<u8>>>
+    where
+        K: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HKEYS").arg(&key))
+            .await
+            .map(|v| v.unwrap_string_array())
+    }
+
+    ///Get the number of fields in the hash stored at `key`.
+    pub async fn hlen<K>(&mut self, key: K) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HLEN").arg(&key))
+            .await
+            .map(|v| v.unwrap_integer())
+    }
+
+    ///Get the number of bytes in `field` in the hash set `key`
+    pub async fn hstrlen<K, F>(&mut self, key: K, field: F) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        F: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HSTRLEN").arg(&key).arg(&field))
+            .await
+            .map(|v| v.unwrap_integer())
+    }
+
+    ///Get the value of each field in the hash field stored at `key`.
+    pub async fn hvals<K>(&mut self, key: K) -> Result<Vec<Value>>
+    where
+        K: AsRef<[u8]>,
+    {
+        self.run_command(Command::new("HVALS").arg(&key))
+            .await
+            .map(|v| v.unwrap_array())
     }
 
     ///Send a `PING` to the server, returning Ok(()) on success.

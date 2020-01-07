@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "bench"), deny(missing_docs))]
+#![cfg_attr(not(feature = "bench"), warn(missing_docs))]
 
 //! Asyncronous redis client built using futures and async await, with optional connection pooling.
 //! ```
@@ -104,6 +104,25 @@ impl Value {
         }
     }
 
+    ///Returns `true` if `self` is nonzero.
+    ///# Panics
+    ///Panics if `self is not a [`Value::Integer`](enum.Value.html#Integer.v)
+    #[inline]
+    pub fn unwrap_bool(self) -> bool {
+        self.unwrap_integer() != 0
+    }
+
+    ///Returns `self` as a vector of Redis strings.
+    ///# Panics
+    ///Panics if `self` is not a [`Value::Array`](enum.Value.html#Array.v) or not all the elements are strings.
+    #[inline]
+    pub fn unwrap_string_array(self) -> Vec<Vec<u8>> {
+        self.unwrap_array()
+            .into_iter()
+            .map(|v| v.unwrap_string())
+            .collect()
+    }
+
     ///Like `unwrap_string`, but returns an `Option` instead of panicking.
     #[inline]
     pub fn optional_string(self) -> Option<Vec<u8>> {
@@ -129,5 +148,11 @@ impl Value {
             Value::Integer(i) => Some(i),
             _ => None,
         }
+    }
+
+    ///Like `unwrap_bool`, but returns an `Option` instead of panicking.
+    #[inline]
+    pub fn optional_bool(self) -> Option<bool> {
+        self.optional_integer().map(|i| i != 0)
     }
 }

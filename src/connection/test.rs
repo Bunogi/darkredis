@@ -272,3 +272,53 @@ async fn exists() {
         key
     );
 }
+
+#[tokio::test]
+async fn hash_sets() {
+    redis_test!(
+        redis,
+        {
+            assert!(redis.hkeys(&key).await.unwrap().is_empty());
+            assert_eq!(redis.hset(&key, "field1", "Hello").await.unwrap(), 1);
+            assert!(redis.hexists(&key, "field1").await.unwrap());
+            assert_eq!(redis.hget(&key, "field1").await.unwrap().unwrap(), b"Hello");
+            assert_eq!(redis.hstrlen(&key, "field1").await.unwrap(), 5);
+
+            assert_eq!(redis.hincrby(&key, "field2", 10).await.unwrap(), 10);
+            assert_eq!(redis.hincrbyfloat(&key, "field2", 0.5).await.unwrap(), 10.5);
+            assert_eq!(
+                redis.hget(&key, "field2").await.unwrap(),
+                Some(b"10.5".to_vec())
+            );
+
+            let fields = redis.hkeys(&key).await.unwrap();
+            assert!(fields.contains(&b"field1".to_vec()));
+            assert!(fields.contains(&b"field2".to_vec()));
+            assert_eq!(redis.hlen(&key).await.unwrap(), 2);
+            assert_eq!(redis.hlen(&key).await.unwrap(), 2);
+
+            let vals = redis.hvals(&key).await.unwrap();
+            assert!(vals.contains(&Value::String(b"Hello".to_vec())));
+            assert!(vals.contains(&Value::String(b"10.5".to_vec())));
+
+            assert_eq!(
+                redis
+                    .hset_slice(&key, &[b"field3", b"field4"], &[b"foo", b"bar"])
+                    .await
+                    .unwrap(),
+                2
+            );
+            assert_eq!(
+                redis
+                    .hdel_slice(&key, &[b"field3", b"field4"])
+                    .await
+                    .unwrap(),
+                2
+            );
+            assert_eq!(redis.hdel(&key, b"field1").await.unwrap(), true);
+
+            assert_eq!(redis.hsetnx(&key, b"field3", b"foo").await.unwrap(), true);
+        },
+        key
+    );
+}
