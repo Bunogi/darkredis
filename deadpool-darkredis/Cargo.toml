@@ -1,6 +1,6 @@
 [package]
 name = "deadpool-darkredis"
-version = "0.6.1-dev"
+version = "0.6.2-dev"
 authors = ["Håkon Jordet <haakon.jordet@gmail.com>"]
 edition = "2018"
 publish = false
@@ -10,4 +10,4 @@ publish = false
 [dependencies]
 async-trait = "0.1.21"
 deadpool = "0.4.3"
-darkredis = { path = "../", version = "0.6.0", default-features = false }
+darkredis = { path = "../", version = "0.6", default-features = false }
