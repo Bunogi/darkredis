@@ -73,7 +73,7 @@ impl Stream for ValueStream {
     }
 }
 
-///A stream of [`Message`s](struct.Message.html). The stream will end if an error is encountered, if the logging feature is enabled. Requires a logger compatible with the [`log`](https://crates.io/crates/log) crate.
+///A stream of [`Message`s](struct.Message.html).
 #[must_use = "No messages will be received if left unused"]
 #[allow(missing_debug_implementations)]
 pub struct MessageStream {
