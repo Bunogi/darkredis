@@ -840,7 +840,8 @@ impl Connection {
     ///# Example
     ///```
     /// use darkredis::{Connection, MSetBuilder};
-    /// # #[tokio::main]
+    ///# #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+    ///# #[cfg_attr(feature = "runtime_async_std", async_std::main)]
     /// # async fn main() {
     /// let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
     /// let builder = MSetBuilder::new()

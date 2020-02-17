@@ -23,6 +23,12 @@ async fn blpop(mut conn: Connection) -> darkredis::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "runtime_async_std")]
+fn main() {
+    println!("This example is only compatible with Tokio.")
+}
+
+#[cfg(feature = "runtime_tokio")]
 #[tokio::main]
 async fn main() -> darkredis::Result<()> {
     let mut conn = Connection::connect("127.0.0.1:6379").await?;

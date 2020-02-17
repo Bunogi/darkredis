@@ -4,6 +4,12 @@ use darkredis::ConnectionPool;
 use futures::StreamExt;
 use std::time::Duration;
 
+#[cfg(feature = "runtime_async_std")]
+fn main() {
+    println!("This example is only compatible with Tokio.")
+}
+
+#[cfg(feature = "runtime_tokio")]
 #[tokio::main]
 async fn main() {
     //Creating a connection pool allows us to easily `spawn` a new connection to use as our listener.
@@ -33,14 +39,12 @@ async fn main() {
     //Use the stream to receive the messages. For a real application you might want to spawn a task, in order
     //to always be listening for updates, so you don't miss any.
     messagestream
-        .for_each(|e| {
-            async move {
-                println!(
-                    "Received a message on channel '{}': {}",
-                    String::from_utf8_lossy(&e.channel),
-                    String::from_utf8_lossy(&e.message)
-                );
-            }
+        .for_each(|e| async move {
+            println!(
+                "Received a message on channel '{}': {}",
+                String::from_utf8_lossy(&e.channel),
+                String::from_utf8_lossy(&e.message)
+            );
         })
         .await;
 

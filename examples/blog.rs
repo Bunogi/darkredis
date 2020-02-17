@@ -33,7 +33,9 @@ async fn show_posts(mut connection: Connection) {
     connection.del("posts").await.unwrap();
 }
 
-#[tokio::main]
+//In your own code, you'd use simply #[tokio::main] or #[async_std::Main]
+#[cfg_attr(feature = "runtime_tokio", tokio::main)]
+#[cfg_attr(feature = "runtime_async_std", async_std::main)]
 async fn main() {
     let connection = Connection::connect("127.0.0.1:6379").await.unwrap();
 

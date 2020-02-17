@@ -8,7 +8,8 @@
 //! ```
 //! use darkredis::*;
 //!
-//! # #[tokio::main]
+//! # #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+//! # #[cfg_attr(feature = "runtime_async_std", async_std::main)]
 //! # async fn main() {
 //! // Create a connection pool with 4 connections
 //! let pool = ConnectionPool::create("127.0.0.1:6379".into(), None, 4).await.unwrap();
@@ -24,7 +25,7 @@
 compile_error!("The `runtime_tokio` and `runtime_async_std` features are mutually exclusive!");
 
 #[cfg(not(any(feature = "runtime_tokio", feature = "runtime_async_std")))]
-compile_error!("Expected one of the features `runtime_tokio` and `runtime_async_std`");
+compile_error!("Expected one of the features `runtime_tokio` or `runtime_async_std`");
 
 #[macro_use]
 extern crate quick_error;

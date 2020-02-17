@@ -2,7 +2,8 @@ use super::*;
 use crate::{redis_test, test::*, Command, CommandList, PMessage, Value};
 use futures::{StreamExt, TryStreamExt};
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn parse_nil() {
     redis_test!(
         redis,
@@ -15,7 +16,8 @@ async fn parse_nil() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn parse_ok() {
     redis_test!(
         redis,
@@ -28,7 +30,8 @@ async fn parse_ok() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn pipelined_commands() {
     redis_test!(
         redis,
@@ -59,7 +62,8 @@ async fn pipelined_commands() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn pubsub() {
     redis_test!(
         publisher,
@@ -119,7 +123,8 @@ async fn pubsub() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn pubsub_pattern() {
     redis_test!(
         publisher,
@@ -154,7 +159,8 @@ async fn pubsub_pattern() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn get_set() {
     redis_test!(
         redis,
@@ -166,7 +172,8 @@ async fn get_set() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn list_convenience() {
     redis_test!(
         redis,
@@ -194,7 +201,8 @@ async fn list_convenience() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn incr_decr() {
     redis_test!(
         redis,
@@ -213,7 +221,8 @@ async fn incr_decr() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn append() {
     redis_test!(
         redis,
@@ -229,7 +238,8 @@ async fn append() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn mget_mset() {
     redis_test!(
         redis,
@@ -253,7 +263,8 @@ async fn mget_mset() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn exists() {
     redis_test!(
         redis,
@@ -266,7 +277,8 @@ async fn exists() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn hash_sets() {
     redis_test!(
         redis,
@@ -314,7 +326,8 @@ async fn hash_sets() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn sets() {
     redis_test!(
         redis,
@@ -329,7 +342,8 @@ async fn sets() {
     );
 }
 
-#[tokio::test]
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
 async fn blpop() {
     redis_test!(
         redis,

@@ -8,7 +8,8 @@ use std::io::Write;
 ///use darkredis::{CommandList, Connection};
 ///use futures::TryStreamExt; //for `try_collect`
 ///# use darkredis::*;
-///# #[tokio::main]
+///# #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+///# #[cfg_attr(feature = "runtime_async_std", async_std::main)]
 ///# async fn main() {
 ///# let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
 ///# connection.del("pipelined-list").await.unwrap();
@@ -122,7 +123,8 @@ impl<'a> CommandList<'a> {
 /// ```
 ///use darkredis::{Command, Connection};
 ///# use darkredis::*;
-///# #[tokio::main]
+///# #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+///# #[cfg_attr(feature = "runtime_async_std", async_std::main)]
 ///# async fn main() {
 ///# let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
 ///# connection.del("singular-key").await.unwrap();

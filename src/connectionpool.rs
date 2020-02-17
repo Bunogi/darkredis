@@ -95,7 +95,8 @@ impl ConnectionPool {
 mod test {
     use super::*;
     use crate::Value;
-    #[tokio::test]
+    #[cfg_attr(feature = "runtime_tokio", tokio::test)]
+    #[cfg_attr(feature = "runtime_async_std", async_std::test)]
     async fn pooling() {
         let connections = 4; //Arbitrary number, must be bigger than 1
         let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), None, connections)
@@ -114,7 +115,8 @@ mod test {
         }
     }
 
-    #[tokio::test]
+    #[cfg_attr(feature = "runtime_tokio", tokio::test)]
+    #[cfg_attr(feature = "runtime_async_std", async_std::test)]
     async fn spawning() {
         let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), None, 1)
             .await
