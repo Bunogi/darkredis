@@ -10,7 +10,7 @@
 /// // Mutable style
 ///builder.append(b"some-other-key", b"some-value");
 ///```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MSetBuilder<'a> {
     inner: Vec<&'a [u8]>,
 }

@@ -1,6 +1,8 @@
 #![cfg_attr(not(feature = "bench"), warn(missing_docs))]
 #![warn(missing_debug_implementations)]
 #![deny(unsafe_code)]
+//For async doctests, it is easier to write out the doctest explicitly using tokio::main.
+#![allow(clippy::needless_doctest_main)]
 
 //! Asyncronous redis client built using futures and async await, with optional connection pooling.
 //! ```
