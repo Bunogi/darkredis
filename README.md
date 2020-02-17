@@ -39,6 +39,9 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.7.0
+### Breaking changes
+- Change the blpop and brpop commands to return a tuple instead an unnecesarry vector.
 ## 0.6.0
 ### Breaking changes
 - Change `run_commands` to return a stream.

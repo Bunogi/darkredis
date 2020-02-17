@@ -1,6 +1,6 @@
 [package]
 name = "darkredis"
-version = "0.6.1"
+version = "0.7.0-dev"
 authors = ["Bunogi <haakon.jordet@gmail.com>"]
 edition = "2018"
 publish = false

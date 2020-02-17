@@ -328,3 +328,30 @@ async fn sets() {
         set
     );
 }
+
+#[tokio::test]
+async fn blpop() {
+    redis_test!(
+        redis,
+        {
+            redis.rpush(&key, "foo").await.unwrap();
+            redis.rpush(&key, "foobar").await.unwrap();
+            redis.rpush(&key2, "bar").await.unwrap();
+
+            assert_eq!(
+                redis.blpop(&[&key, &key2], 0).await.unwrap().unwrap(),
+                (key.clone(), b"foo".to_vec())
+            );
+            assert_eq!(
+                redis.brpop(&[&key2, &key], 0).await.unwrap().unwrap(),
+                (key2.clone(), b"bar".to_vec())
+            );
+            assert_eq!(
+                redis.brpop(&[&key, &key2], 0).await.unwrap().unwrap(),
+                (key.clone(), b"foobar".to_vec())
+            );
+        },
+        key,
+        key2
+    );
+}

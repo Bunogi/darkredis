@@ -632,12 +632,16 @@ impl Connection {
     }
 
     ///Pop a value from one of the lists from the left side.
-    ///Block timeout seconds when there are no values to pop (timeout=0 means infinite)
+    ///Block timeout seconds when there are no values to pop. A zero-value with block infinitely.
     ///# Return value
     ///* `Ok(Some((list,value)))`: name of the list and corresponding value
     ///* `Ok(None)`: timeout (no values)
     ///* `Err(err)`: there was an error
-    pub async fn blpop<K>(&mut self, lists: &[K], timeout: u32) -> Result<Option<Vec<Vec<u8>>>>
+    pub async fn blpop<K>(
+        &mut self,
+        lists: &[K],
+        timeout: u32,
+    ) -> Result<Option<(Vec<u8>, Vec<u8>)>>
     where
         K: AsRef<[u8]>,
     {
@@ -645,12 +649,16 @@ impl Connection {
     }
 
     ///Pop a value from one of the lists from the right side.
-    ///Block timeout seconds when there are no values to pop (timeout=0 means infinite)
+    ///Block timeout seconds when there are no values to pop. A zero-value will block infinitely.
     ///# Return value
     ///* `Ok(Some((list,value)))`: name of the list and corresponding value
     ///* `Ok(None)`: timeout (no values)
     ///* `Err(err)`: there was an error
-    pub async fn brpop<K>(&mut self, lists: &[K], timeout: u32) -> Result<Option<Vec<Vec<u8>>>>
+    pub async fn brpop<K>(
+        &mut self,
+        lists: &[K],
+        timeout: u32,
+    ) -> Result<Option<(Vec<u8>, Vec<u8>)>>
     where
         K: AsRef<[u8]>,
     {
@@ -663,7 +671,7 @@ impl Connection {
         lists: &[K],
         timeout: u32,
         redis_cmd: &str,
-    ) -> Result<Option<Vec<Vec<u8>>>>
+    ) -> Result<Option<(Vec<u8>, Vec<u8>)>>
     where
         K: AsRef<[u8]>,
     {
@@ -673,8 +681,9 @@ impl Connection {
             Value::Array(values) => {
                 let vlen = values.len();
                 if vlen == 2 {
+                    let mut v = values.into_iter().map(|s| s.unwrap_string());
                     return Ok(Some(
-                        values.into_iter().map(|s| s.unwrap_string()).collect(),
+                        (v.next().unwrap(), v.next().unwrap()), // values.into_iter().map(|s| s.unwrap_string()).collect(),
                     ));
                 }
                 Err(Error::UnexpectedResponse(format!(

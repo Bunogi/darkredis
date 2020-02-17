@@ -6,9 +6,9 @@ async fn blpop(mut conn: Connection) -> darkredis::Result<()> {
     loop {
         println!("blpop: waiting on 'list_a' and 'list_b' for 1 sec...");
         match conn.blpop(&["list_a", "list_b"], 1).await? {
-            Some(res) => {
-                let list = String::from_utf8_lossy(&res[0]);
-                let value = String::from_utf8_lossy(&res[1]);
+            Some((list, value)) => {
+                let list = String::from_utf8_lossy(&list);
+                let value = String::from_utf8_lossy(&value);
                 println!("blpop: {} -> {}", list, value);
                 if value == "quit" {
                     break;
@@ -16,7 +16,7 @@ async fn blpop(mut conn: Connection) -> darkredis::Result<()> {
             }
             None => {
                 timeouts += 1;
-                println!("blpop: timeout {}", timeouts);
+                println!("blpop: have timed out {} times", timeouts);
             }
         }
     }
@@ -36,6 +36,8 @@ async fn main() -> darkredis::Result<()> {
             ("list_b", "msg4"),
             ("list_a", "quit"),
         ];
+
+        // Send a message every now and again to the listening task
         for (list, val) in msgs.iter() {
             println!("rpush: {} -> {}", val, list);
             conn.rpush(list, val).await.unwrap();
