@@ -1,5 +1,5 @@
 use crate::{Command, CommandList, Error, Result, Value};
-use futures::lock::Mutex;
+use futures::{future::BoxFuture, lock::Mutex, FutureExt};
 
 #[cfg(feature = "runtime_async_std")]
 use async_std::{
@@ -115,35 +115,38 @@ impl Connection {
         }
     }
 
-    //Assumes that there will never be nested arrays in a redis response.
-    async fn parse_array(start: &[u8], mut stream: &mut TcpStream) -> Result<Value> {
-        let num_parsed = String::from_utf8_lossy(&start[1..])
-            .trim()
-            .parse::<i32>()
-            .unwrap();
+    fn parse_array<'a>(start: &'a [u8], stream: &'a mut TcpStream) -> BoxFuture<'a, Result<Value>> {
+        async move {
+            let num_parsed = String::from_utf8_lossy(&start[1..])
+                .trim()
+                .parse::<i32>()
+                .unwrap();
 
-        // result can be negative (blpop/brpop return '-1' on timeout)
-        if num_parsed < 0 {
-            return Ok(Value::Nil);
-        }
+            // result can be negative (blpop/brpop return '-1' on timeout)
+            if num_parsed < 0 {
+                return Ok(Value::Nil);
+            }
 
-        let num = num_parsed as usize;
-        let mut values = Vec::with_capacity(num);
+            let num = num_parsed as usize;
+            let mut values = Vec::with_capacity(num);
 
-        for _ in 0..num {
-            let buf = read_until(&mut stream, b'\n').await?;
-            match buf[0] {
-                b'+' | b'-' | b':' => values.push(Self::parse_simple_value(&buf).await?),
-                b'$' => values.push(Self::parse_string(&buf, &mut stream).await?),
-                _ => {
-                    return Err(Error::UnexpectedResponse(
-                        String::from_utf8_lossy(&buf).to_string(),
-                    ))
+            for _ in 0..num {
+                let buf = read_until(stream, b'\n').await?;
+                match buf[0] {
+                    b'+' | b'-' | b':' => values.push(Self::parse_simple_value(&buf).await?),
+                    b'$' => values.push(Self::parse_string(&buf, stream).await?),
+                    b'*' => values.push(Self::parse_array(&buf, stream).await?),
+                    _ => {
+                        return Err(Error::UnexpectedResponse(
+                            String::from_utf8_lossy(&buf).to_string(),
+                        ))
+                    }
                 }
             }
-        }
 
-        Ok(Value::Array(values))
+            Ok(Value::Array(values))
+        }
+        .boxed()
     }
 
     //Read a value from the connection.
