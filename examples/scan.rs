@@ -1,4 +1,4 @@
-use darkredis::Connection;
+use darkredis::{Connection, MSetBuilder};
 use futures::StreamExt;
 
 //In your own code, you'd use simply #[tokio::main] or #[async_std::main]
@@ -35,4 +35,22 @@ async fn main() {
     let sets = connection.scan().run().collect::<Vec<Vec<u8>>>().await;
 
     println!("There are {} keys in the database!", sets.len());
+
+    //HSCAN is a little different, it returns the name of the field as well as the value of the field.
+
+    let hash_key = "hash";
+    let builder = MSetBuilder::new()
+        .set(b"field1", b"foo")
+        .set(b"field2", b"bar");
+    connection.hset_many(&hash_key, builder).await.unwrap();
+
+    let fields = connection
+        .hscan(&hash_key)
+        .run()
+        .map(|(f, v)| (String::from_utf8(f).unwrap(), String::from_utf8(v).unwrap()))
+        .collect::<Vec<(String, String)>>()
+        .await;
+    for (field, value) in fields {
+        println!("Field {} is {}", field, value);
+    }
 }
