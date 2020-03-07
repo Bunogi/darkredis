@@ -1,6 +1,6 @@
 [package]
 name = "darkredis"
-version = "0.7.0-dev"
+version = "0.8.0-dev"
 authors = ["Bunogi <haakon.jordet@gmail.com>"]
 edition = "2018"
 publish = false
@@ -27,15 +27,14 @@ bench = []
 members = ["deadpool-darkredis"]
 
 [dependencies]
-async-std = { version = "1.4.0", features = ["attributes"], optional = true }
-futures = "0.3.1"
-quick-error = "1.2.2"
-tokio = { version = "0.2.8", optional = true, features = ["tcp", "io-util", "dns", "macros", "time"] }
+async-std = { version = "1.5.0", features = ["attributes"], optional = true }
+futures = "0.3.4"
+quick-error = "1.2.3"
+tokio = { version = "0.2.13", optional = true, features = ["tcp", "io-util", "dns", "macros", "time"] }
 
 [dev-dependencies]
-lazy_static = "1.3.0"
-num_cpus = "1.10.1"
-criterion = "0.3.0"
+num_cpus = "1.12.0"
+criterion = "0.3.1"
 
 [[bench]]
 name = "command"

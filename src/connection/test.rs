@@ -416,7 +416,7 @@ async fn scan() {
         redis,
         {
             //Verify that it handles an empty search correctly
-            let result: Vec<Vec<u8>> = redis.scan().run().pattern(&key).collect().await;
+            let result: Vec<Vec<u8>> = redis.scan().pattern(&key).run().collect().await;
             dbg!(&result);
             assert!(result.is_empty());
 
