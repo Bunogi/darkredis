@@ -18,7 +18,9 @@ use tokio::{
 use std::sync::Arc;
 
 pub mod builder;
+pub mod scan;
 pub mod stream;
+pub use scan::{HScanBuilder, HScanStream, ScanBuilder, ScanStream};
 pub use stream::{Message, MessageStream, PMessage, PMessageStream, ResponseStream};
 
 use builder::MSetBuilder;
@@ -930,5 +932,89 @@ where {
         let command = Command::new("SISMEMBER").arg(&key).arg(&value);
 
         Ok(self.run_command(command).await? == Value::Integer(1))
+    }
+
+    ///Scan for elements in a set.
+    ///# Return value
+    ///Returns a list of the elements which matched in the set.
+    ///```
+    /// use darkredis::Connection;
+    /// use futures::StreamExt;
+    ///# #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+    ///# #[cfg_attr(feature = "runtime_async_std", async_std::main)]
+    /// # async fn main() {
+    ///
+    /// let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+    /// let key = b"test-set".to_vec();
+    /// # connection.del(&key).await.unwrap();
+    /// connection.sadd(&key, "foo").await.unwrap();
+    /// connection.sadd(&key, "bar").await.unwrap();
+    ///
+    /// let results = connection.sscan(&key).run()
+    ///   .collect::<Vec<Vec<u8>>>().await;
+    ///
+    /// assert!(results.contains(&b"foo".to_vec()));
+    /// assert!(results.contains(&b"bar".to_vec()));
+    /// # connection.del(&key).await.unwrap();
+    /// # }
+    ///```
+    pub fn sscan<'a, K>(&'a mut self, key: &'a K) -> ScanBuilder
+    where
+        K: AsRef<[u8]>,
+    {
+        ScanBuilder::new("SSCAN", Some(key.as_ref()), self)
+    }
+
+    ///Scan for keys in the database.
+    ///# Return Value
+    /// A stream of the matching keys.
+    ///```no_run
+    /// use darkredis::Connection;
+    /// use futures::StreamExt;
+    ///# #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+    ///# #[cfg_attr(feature = "runtime_async_std", async_std::main)]
+    /// # async fn main() {
+    ///
+    /// let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+    /// let key = b"locate-me".to_vec();
+    /// connection.set(&key, "dummy-value").await.unwrap();
+    /// let results = connection.scan().pattern(b"locate*").run()
+    ///   .collect::<Vec<Vec<u8>>>().await;
+    ///
+    /// assert!(results.contains(&key));
+    /// # connection.del(&key).await.unwrap();
+    /// # }
+    ///```
+    pub fn scan(&mut self) -> ScanBuilder {
+        ScanBuilder::new("SCAN", None, self)
+    }
+
+    ///Scan for fields in the hash set at `key`.
+    ///```
+    /// use darkredis::Connection;
+    /// use futures::StreamExt;
+    ///# #[cfg_attr(feature = "runtime_tokio", tokio::main)]
+    ///# #[cfg_attr(feature = "runtime_async_std", async_std::main)]
+    /// # async fn main() {
+    ///
+    /// let mut connection = Connection::connect("127.0.0.1:6379").await.unwrap();
+    /// let key = b"hscan_test".to_vec();
+    /// connection.hset(&key, "one", "1").await.unwrap();
+    /// connection.hset(&key, "two", "2").await.unwrap();
+    /// connection.hset(&key, "three", "3").await.unwrap();
+    /// let results = connection.hscan(&key).run()
+    ///   .collect::<Vec<(Vec<u8>, Vec<u8>)>>().await;
+    ///
+    /// assert_eq!(results.len(), 3);
+    /// assert!(results.contains(&(b"one".to_vec(), b"1".to_vec())));
+    /// assert!(results.contains(&(b"two".to_vec(), b"2".to_vec())));
+    /// assert!(results.contains(&(b"three".to_vec(), b"3".to_vec())));
+    /// # connection.del(&key).await.unwrap();
+    /// # }
+    pub fn hscan<'a, K>(&'a mut self, key: &'a K) -> HScanBuilder<'a>
+    where
+        K: AsRef<[u8]>,
+    {
+        HScanBuilder::new(key.as_ref(), self)
     }
 }

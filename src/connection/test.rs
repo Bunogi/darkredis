@@ -369,3 +369,94 @@ async fn blpop() {
         key2
     );
 }
+
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
+async fn sscan() {
+    redis_test!(
+        redis,
+        {
+            let big_number = 100u8;
+            //Populate some_set with a lot of members in order to ensure that we have to call SSCAN twice.
+            let name_prefix = "foo";
+            for i in 0..big_number {
+                redis
+                    .sadd(&some_set, &format!("{}.{}", name_prefix, i))
+                    .await
+                    .unwrap();
+            }
+
+            //Check that all values are received correctly
+            let stream = redis.sscan(&some_set).pattern(b"foo.*").run();
+            let result: Vec<Vec<u8>> = stream.collect().await;
+            let mut result: Vec<String> = result
+                .into_iter()
+                .map(|s| String::from_utf8(s).unwrap())
+                .collect();
+            result.sort_unstable();
+            result.dedup();
+            assert_eq!(result.len(), 100);
+            for i in 0..big_number {
+                let name = format!("{}.{}", name_prefix, i);
+                assert!(result.contains(&name));
+            }
+        },
+        some_set
+    );
+}
+
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
+async fn scan() {
+    redis_test!(
+        redis,
+        {
+            //Set the key to enter it into the database
+            redis.set(&key, "dummy-data").await.unwrap();
+
+            //Check that it's returned in the results
+            let result: Vec<Vec<u8>> = redis.scan().run().collect().await;
+            assert!(result.contains(&key));
+        },
+        key
+    );
+}
+
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
+async fn hscan() {
+    redis_test!(
+        redis,
+        {
+            let big_number = 100u8;
+            //Populate some_set with a lot of members in order to ensure that we have to call SSCAN twice.
+            let name_prefix = "foo";
+
+            for i in 0..big_number {
+                redis
+                    .hset(&some_hash, &format!("{}.{}", name_prefix, i), b"0")
+                    .await
+                    .unwrap();
+            }
+
+            //Check that all values are received correctly
+            let stream = redis.hscan(&some_hash).pattern(b"foo.*").run();
+            let result: Vec<(Vec<u8>, Vec<u8>)> = stream.collect().await;
+            let result: Vec<(String, String)> = result
+                .into_iter()
+                .map(|(key, value)| {
+                    (
+                        String::from_utf8(key).unwrap(),
+                        String::from_utf8(value).unwrap(),
+                    )
+                })
+                .collect();
+
+            for i in 0..big_number {
+                let name = format!("{}.{}", name_prefix, i);
+                assert!(result.contains(&(name, "0".to_string())));
+            }
+        },
+        some_hash
+    );
+}

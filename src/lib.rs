@@ -49,8 +49,8 @@ mod test;
 
 pub use command::{Command, CommandList};
 pub use connection::{
-    builder::MSetBuilder, Connection, Message, MessageStream, PMessage, PMessageStream,
-    ResponseStream,
+    builder::MSetBuilder, Connection, HScanBuilder, HScanStream, Message, MessageStream, PMessage,
+    PMessageStream, ResponseStream, ScanBuilder, ScanStream,
 };
 pub use connectionpool::ConnectionPool;
 pub use error::Error;
@@ -162,3 +162,32 @@ impl Value {
         self.optional_integer().map(|i| i != 0)
     }
 }
+
+// ///An enum corresponding to every Redis type.
+// #[derive(Debug, Clone)]
+// pub enum DataType {
+//     ///A simple string.
+//     String,
+//     ///A List.
+//     List,
+//     ///A set.
+//     Set,
+//     ///A sorted set.
+//     ZSet,
+//     ///A hash set.
+//     Hash,
+//     ///A stream.
+//     Stream,
+// }
+
+// impl std::convert::AsRef<[u8]> for DataType {
+//     fn as_ref(&self) -> &[u8] {
+//         match self {
+//             String => b"string",
+//             List => b"list",
+//             Set => b"set",
+//             ZSet => b"zset",
+//             Stream => b"stream",
+//         }
+//     }
+// }

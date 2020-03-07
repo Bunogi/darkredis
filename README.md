@@ -44,6 +44,8 @@ async fn main() -> darkredis::Result<()> {
 - Change the blpop and brpop commands to return a tuple instead an unnecesarry vector.
 ### Changes
 - Properly parse nested arrays.
+### Additions
+- Add support for SCAN, SSCAN and HSCAN.
 ## 0.6.0
 ### Breaking changes
 - Change `run_commands` to return a stream.
