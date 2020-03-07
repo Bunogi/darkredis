@@ -163,31 +163,19 @@ impl Value {
     }
 }
 
-// ///An enum corresponding to every Redis type.
-// #[derive(Debug, Clone)]
-// pub enum DataType {
-//     ///A simple string.
-//     String,
-//     ///A List.
-//     List,
-//     ///A set.
-//     Set,
-//     ///A sorted set.
-//     ZSet,
-//     ///A hash set.
-//     Hash,
-//     ///A stream.
-//     Stream,
-// }
-
-// impl std::convert::AsRef<[u8]> for DataType {
-//     fn as_ref(&self) -> &[u8] {
-//         match self {
-//             String => b"string",
-//             List => b"list",
-//             Set => b"set",
-//             ZSet => b"zset",
-//             Stream => b"stream",
-//         }
-//     }
-// }
+///An enum corresponding to every Redis type.
+#[derive(Debug, Clone, PartialEq)]
+pub enum DataType {
+    ///A simple string.
+    String,
+    ///A List.
+    List,
+    ///A set.
+    Set,
+    ///A sorted set.
+    ZSet,
+    ///A hash set.
+    Hash,
+    ///A stream.
+    Stream,
+}

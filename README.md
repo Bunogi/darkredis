@@ -46,6 +46,7 @@ async fn main() -> darkredis::Result<()> {
 - Properly parse nested arrays.
 ### Additions
 - Add support for SCAN, SSCAN and HSCAN.
+- Convenience function for the TYPE command.
 ## 0.6.0
 ### Breaking changes
 - Change `run_commands` to return a stream.

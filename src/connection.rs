@@ -1,4 +1,4 @@
-use crate::{Command, CommandList, Error, Result, Value};
+use crate::{Command, CommandList, DataType, Error, Result, Value};
 use futures::{future::BoxFuture, lock::Mutex, FutureExt};
 
 #[cfg(feature = "runtime_async_std")]
@@ -1016,5 +1016,26 @@ where {
         K: AsRef<[u8]>,
     {
         HScanBuilder::new(key.as_ref(), self)
+    }
+
+    ///Get the Type of `key` using the `TYPE` command.
+    pub async fn key_type<K>(&mut self, key: K) -> Result<Option<DataType>>
+    where
+        K: AsRef<[u8]>,
+    {
+        let command = Command::new("TYPE").arg(&key);
+        let result = self.run_command(command).await?.unwrap_string();
+        match result.as_slice() {
+            b"string\r\n" => Ok(Some(DataType::String)),
+            b"list\r\n" => Ok(Some(DataType::List)),
+            b"set\r\n" => Ok(Some(DataType::Set)),
+            b"zset\r\n" => Ok(Some(DataType::ZSet)),
+            b"hash\r\n" => Ok(Some(DataType::Hash)),
+            b"stream\r\n" => Ok(Some(DataType::Stream)),
+            b"none\r\n" => Ok(None),
+            _ => Err(Error::UnexpectedResponse(
+                String::from_utf8_lossy(&result).to_string(),
+            )),
+        }
     }
 }

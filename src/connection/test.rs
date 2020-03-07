@@ -1,5 +1,5 @@
 use super::*;
-use crate::{redis_test, test::*, Command, CommandList, PMessage, Value};
+use crate::{redis_test, test::*, Command, CommandList, DataType, PMessage, Value};
 use futures::{StreamExt, TryStreamExt};
 
 #[cfg_attr(feature = "runtime_tokio", tokio::test)]
@@ -458,5 +458,70 @@ async fn hscan() {
             }
         },
         some_hash
+    );
+}
+
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
+async fn key_type() {
+    redis_test!(
+        redis,
+        {
+            //Set every kind of datatype to test
+            let commands = CommandList::new("SET")
+                .arg(&string)
+                .arg(b"foo")
+                .command("LPUSH")
+                .arg(&list)
+                .arg(b"foo")
+                .command("SADD")
+                .arg(&set)
+                .arg(b"foo")
+                .command("HSET")
+                .arg(&hash)
+                .arg(b"field")
+                .arg(b"foo")
+                .command("ZADD")
+                .arg(&sorted_set)
+                .arg(b"0")
+                .arg(b"foo")
+                .command("XADD")
+                .arg(&stream)
+                .arg(b"*")
+                .arg(b"foo")
+                .arg(b"bar");
+
+            redis
+                .run_commands(commands)
+                .await
+                .unwrap()
+                .try_collect::<Vec<Value>>()
+                .await
+                .unwrap();
+
+            assert_eq!(
+                redis.key_type(&string).await.unwrap(),
+                Some(DataType::String)
+            );
+            assert_eq!(redis.key_type(&list).await.unwrap(), Some(DataType::List));
+            assert_eq!(redis.key_type(&set).await.unwrap(), Some(DataType::Set));
+            assert_eq!(redis.key_type(&hash).await.unwrap(), Some(DataType::Hash));
+            assert_eq!(
+                redis.key_type(&sorted_set).await.unwrap(),
+                Some(DataType::ZSet)
+            );
+            assert_eq!(
+                redis.key_type(&stream).await.unwrap(),
+                Some(DataType::Stream)
+            );
+            assert_eq!(redis.key_type(&empty).await.unwrap(), None);
+        },
+        string,
+        list,
+        set,
+        hash,
+        sorted_set,
+        stream,
+        empty
     );
 }
