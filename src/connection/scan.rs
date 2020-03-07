@@ -184,7 +184,7 @@ impl<'a> Stream for ScanStream<'a> {
                         self.key,
                         cursor.clone(),
                         self.pattern,
-                        self.count.clone(),
+                        self.count,
                         self.connection.clone(),
                     );
 
