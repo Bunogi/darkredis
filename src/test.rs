@@ -39,8 +39,7 @@ macro_rules! redis_test {
     ($redis:ident, $block:tt, $( $key:ident ),+) => {
         use crate::create_key;
         use crate::cleanup_keys;
-        //Would use a static connection pool like before, but using `futures::block_on` doesn't work wth tokio
-        //and there appears to be no way to do it in a test like this anyway
+        //Would use a static connection pool like before, but using `futures::block_on` doesn't really work.
         let mut $redis = Connection::connect(TEST_ADDRESS).await.unwrap();
         $(
             let $key: Vec<u8> = create_key!($key);

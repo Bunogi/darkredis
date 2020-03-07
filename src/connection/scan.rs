@@ -7,7 +7,7 @@ use futures::{
 use std::{collections::VecDeque, future::Future, iter::Iterator, pin::Pin};
 
 #[derive(Debug)]
-///Builder to build a SCAN or SSCAN command. Borrows all it's data.
+///Builder to build a SCAN or SSCAN command. Borrows all its data.
 pub struct ScanBuilder<'a> {
     connection: &'a mut Connection,
     pattern: Option<&'a [u8]>,
@@ -40,7 +40,7 @@ impl<'a> ScanBuilder<'a> {
         self
     }
 
-    ///Return a maximum of `count` keys per query to Redis. This does not limit the number of returnd
+    ///Return a maximum of `count` keys per query to Redis. This does not limit the number of returned
     ///keys in the stream, see the Redis documentation on [`SCAN`](https://redis.io/commands/scan)
     ///for more information.
     pub fn count(mut self, count: usize) -> Self {
@@ -201,7 +201,7 @@ impl<'a> Stream for ScanStream<'a> {
     }
 }
 
-///Builder to build a HSCAN command. Borrows all it's data.
+///Builder to build a HSCAN command. Borrows all its data.
 #[derive(Debug)]
 pub struct HScanBuilder<'a> {
     connection: &'a mut Connection,

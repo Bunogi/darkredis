@@ -49,7 +49,7 @@ async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
 }
 
 ///A connection to Redis. Copying is cheap as the inner type is a simple, futures-aware, `Arc<Mutex>`, and will
-///not create a new connection. Use a [`ConnectionPool`](struct.ConnectionPool.html) if you want to use pooled conections.
+///not create a new connection. Use a [`ConnectionPool`](struct.ConnectionPool.html) if you want to use pooled connections.
 ///Alternatively, there's the `deadpool-darkredis` crate.
 ///Every convenience function can work with any kind of data as long as it can be converted into bytes.
 ///Check the [Redis command reference](https://redis.io/commands) for in-depth explanations of each command.
@@ -950,6 +950,7 @@ where {
     ///Scan for elements in a set.
     ///# Return value
     ///Returns a list of the elements which matched in the set.
+    ///# Example
     ///```
     /// use darkredis::Connection;
     /// use futures::StreamExt;
@@ -981,6 +982,7 @@ where {
     ///Scan for keys in the database.
     ///# Return Value
     /// A stream of the matching keys.
+    ///# Example
     ///```no_run
     /// use darkredis::Connection;
     /// use futures::StreamExt;
@@ -1003,6 +1005,7 @@ where {
     }
 
     ///Scan for fields in the hash set at `key`.
+    ///# Example
     ///```
     /// use darkredis::Connection;
     /// use futures::StreamExt;

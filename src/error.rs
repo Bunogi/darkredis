@@ -2,7 +2,7 @@ quick_error! {
     ///The `darkredis` error type.
     #[derive(Debug)]
     pub enum Error {
-        ///An io error occured trying to write or read from a TCP socket.
+        ///An IO error occurred trying to write or read from a TCP socket.
         Io(err: std::io::Error) {
             from()
         }

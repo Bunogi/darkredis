@@ -1,7 +1,7 @@
 use crate::connection::builder::MSetBuilder;
 use std::io::Write;
 
-///A struct for defining commands manually, which allows for pipelining of several commands. If you need
+///Struct for defining commands manually, which allows for pipelining of several commands. If you need
 ///to only run one command, use [`Command`](struct.Command.html), which has almost the same API.
 ///# Example
 /// ```
@@ -118,7 +118,7 @@ impl<'a> CommandList<'a> {
     }
 }
 
-///A struct for defining commands manually. If you want to run multiple commands in a pipeline, use [`CommandList`](struct.CommandList.html).
+///Struct for defining commands manually. If you want to run multiple commands in a pipeline, use [`CommandList`](struct.CommandList.html).
 ///# Example
 /// ```
 ///use darkredis::{Command, Connection};
