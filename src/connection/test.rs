@@ -376,6 +376,10 @@ async fn sscan() {
     redis_test!(
         redis,
         {
+            //Verify that it handles an empty search correctly
+            let result: Vec<Vec<u8>> = redis.sscan(&some_set).run().collect().await;
+            assert!(result.is_empty());
+
             let big_number = 100u8;
             //Populate some_set with a lot of members in order to ensure that we have to call SSCAN twice.
             let name_prefix = "foo";
@@ -411,6 +415,11 @@ async fn scan() {
     redis_test!(
         redis,
         {
+            //Verify that it handles an empty search correctly
+            let result: Vec<Vec<u8>> = redis.scan().run().pattern(&key).collect().await;
+            dbg!(&result);
+            assert!(result.is_empty());
+
             //Set the key to enter it into the database
             redis.set(&key, "dummy-data").await.unwrap();
 
@@ -428,6 +437,10 @@ async fn hscan() {
     redis_test!(
         redis,
         {
+            //Verify that it handles an empty search correctly
+            let result: Vec<(Vec<u8>, Vec<u8>)> = redis.hscan(&some_hash).run().collect().await;
+            assert!(result.is_empty());
+
             let big_number = 100u8;
             //Populate some_set with a lot of members in order to ensure that we have to call SSCAN twice.
             let name_prefix = "foo";
