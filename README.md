@@ -50,6 +50,7 @@ async fn main() -> darkredis::Result<()> {
 ### Additions
 - Add support for SCAN, SSCAN and HSCAN.
 - Convenience function for the TYPE command.
+- Add convenience functions for all set commands.
 ## 0.6.0
 ### Breaking changes
 - Change `run_commands` to return a stream.

@@ -525,3 +525,96 @@ async fn key_type() {
         empty
     );
 }
+
+#[cfg_attr(feature = "runtime_tokio", tokio::test)]
+#[cfg_attr(feature = "runtime_async_std", async_std::test)]
+async fn set_commands() {
+    redis_test!(
+        redis,
+        {
+            //Setting, cardinality
+            assert!(redis.sadd(&set, "foo").await.unwrap());
+            assert!(!redis.sadd(&set, "foo").await.unwrap());
+            assert_eq!(redis.scard(&set).await.unwrap(), 1);
+
+            //Sismember, smembers
+            assert!(redis.sismember(&set, "foo").await.unwrap());
+            assert_eq!(redis.smembers(&set).await.unwrap(), vec![b"foo"]);
+
+            //Move, delete
+            assert!(redis.smove(&set, &other_set, "foo").await.unwrap());
+            assert!(!redis.sismember(&set, "foo").await.unwrap());
+            assert!(redis.sismember(&other_set, "foo").await.unwrap());
+            assert_eq!(redis.srem(&other_set, "foo").await.unwrap(), true);
+
+            //Adding and deletion as a slice:
+            assert_eq!(
+                redis
+                    .sadd_slice(&other_set, &["foo", "bar", "baz"])
+                    .await
+                    .unwrap(),
+                3
+            );
+            assert_eq!(
+                redis
+                    .srem_slice(&other_set, &["foo", "bar", "baz"])
+                    .await
+                    .unwrap(),
+                3
+            );
+
+            //Difference commands
+            assert!(redis.sadd(&set, "foo").await.unwrap());
+            assert!(redis.sadd(&set, "bar").await.unwrap());
+            assert!(redis.sadd(&other_set, "bar").await.unwrap());
+            assert_eq!(
+                redis.sdiff(&[&set, &other_set]).await.unwrap(),
+                vec![b"foo"]
+            );
+            assert_eq!(
+                redis
+                    .sdiffstore(&diff_set, &[&set, &other_set])
+                    .await
+                    .unwrap(),
+                1
+            );
+            assert_eq!(redis.smembers(&diff_set).await.unwrap(), vec![b"foo"]);
+
+            //intersect commands
+            assert_eq!(
+                redis.sinter(&[&set, &other_set]).await.unwrap(),
+                vec![b"bar"]
+            );
+            assert_eq!(
+                redis
+                    .sinterstore(&diff_set, &[&set, &other_set])
+                    .await
+                    .unwrap(),
+                1
+            );
+            assert_eq!(redis.smembers(&diff_set).await.unwrap(), vec![b"bar"]);
+
+            //get random members
+            assert_eq!(
+                redis.srandmember(&other_set, 1).await.unwrap(),
+                vec![b"bar"]
+            );
+            assert_eq!(redis.spop(&other_set, 1).await.unwrap(), vec![b"bar"]);
+
+            //Union commands
+            let union = redis.sunion(&[&set, &other_set]).await.unwrap();
+            assert!(union.contains(&b"foo".to_vec()));
+            assert!(union.contains(&b"bar".to_vec()));
+            redis
+                .sunionstore(&diff_set, &[&set, &other_set])
+                .await
+                .unwrap();
+            let members = redis.smembers(&diff_set).await.unwrap();
+            assert!(members.contains(&b"foo".to_vec()));
+            assert!(members.contains(&b"bar".to_vec()));
+        },
+        set,
+        other_set,
+        diff_set
+    );
+}

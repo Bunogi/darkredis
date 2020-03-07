@@ -1051,4 +1051,144 @@ where {
             )),
         }
     }
+
+    ///Get the number of members in the set at `key`.
+    pub async fn scard<K>(&mut self, key: &K) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+    {
+        let command = Command::new("SCARD").arg(&key);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Move set member `member` from `source` to `destination`.
+    ///# Return value
+    ///`true` if the member was moved.
+    pub async fn smove<S, D, M>(&mut self, source: S, destination: D, member: M) -> Result<bool>
+    where
+        S: AsRef<[u8]>,
+        M: AsRef<[u8]>,
+        D: AsRef<[u8]>,
+    {
+        let command = Command::new("SMOVE")
+            .arg(&source)
+            .arg(&destination)
+            .arg(&member);
+        Ok(self.run_command(command).await?.unwrap_bool())
+    }
+
+    ///Remove set member `member`, from the set `key`.
+    ///# Return value
+    ///`true` if the member was removed.
+    pub async fn srem<K, M>(&mut self, key: K, member: M) -> Result<bool>
+    where
+        K: AsRef<[u8]>,
+        M: AsRef<[u8]>,
+    {
+        let command = Command::new("SREM").arg(&key).arg(&member);
+        Ok(self.run_command(command).await?.unwrap_bool())
+    }
+
+    ///Remove every member in `members` from the set at `key`.
+    ///# Return value
+    ///The number of members which were removed.
+    pub async fn srem_slice<K, M>(&mut self, key: K, members: &[M]) -> Result<isize>
+    where
+        K: AsRef<[u8]>,
+        M: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(members);
+        let command = Command::new("SREM").arg(&key).args(members);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Return the difference in members between the first set and all the other sets.
+    pub async fn sdiff<S>(&mut self, sets: &[S]) -> Result<Vec<Vec<u8>>>
+    where
+        S: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(sets);
+        let command = Command::new("SDIFF").args(sets);
+        Ok(self.run_command(command).await?.unwrap_string_array())
+    }
+
+    ///Place the difference in members between the sets into `destination`.
+    ///# Return value
+    ///The number of elements in `destination` after the operation.
+    pub async fn sdiffstore<D, S>(&mut self, destination: D, sets: &[S]) -> Result<isize>
+    where
+        D: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(sets);
+        let command = Command::new("SDIFFSTORE").arg(&destination).args(sets);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Return the members which are in every set.
+    pub async fn sinter<S>(&mut self, sets: &[S]) -> Result<Vec<Vec<u8>>>
+    where
+        S: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(sets);
+        let command = Command::new("SINTER").args(sets);
+        Ok(self.run_command(command).await?.unwrap_string_array())
+    }
+
+    ///Create a new set at `destination` containing the members which are part of all sets.
+    ///# Return value
+    ///The number of elements in `destination` after the operation.
+    pub async fn sinterstore<D, S>(&mut self, destination: D, sets: &[S]) -> Result<isize>
+    where
+        D: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(sets);
+        let command = Command::new("SINTERSTORE").arg(&destination).args(sets);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
+
+    ///Return a `count` random members of `set`. If `count` is negative, the same element can show up
+    ///multiple times. See the [Redis documentation](https://redis.io/commands/srandmember) for more info.
+    pub async fn srandmember<S>(&mut self, set: S, count: isize) -> Result<Vec<Vec<u8>>>
+    where
+        S: AsRef<[u8]>,
+    {
+        let count = count.to_string();
+        let command = Command::new("SRANDMEMBER").arg(&set).arg(&count);
+        Ok(self.run_command(command).await?.unwrap_string_array())
+    }
+
+    ///Pop `count` random elements out of `set`.
+    pub async fn spop<S>(&mut self, set: S, count: isize) -> Result<Vec<Vec<u8>>>
+    where
+        S: AsRef<[u8]>,
+    {
+        let count = count.to_string();
+        let command = Command::new("SPOP").arg(&set).arg(&count);
+        Ok(self.run_command(command).await?.unwrap_string_array())
+    }
+
+    ///Return the union of every set in `sets`.
+    pub async fn sunion<S>(&mut self, sets: &[S]) -> Result<Vec<Vec<u8>>>
+    where
+        S: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(sets);
+        let command = Command::new("SUNION").args(sets);
+        Ok(self.run_command(command).await?.unwrap_string_array())
+    }
+
+    ///Store the union of `sets` in `destination`.
+    ///# Return value
+    ///The number of elements in `destination` after the operation.
+    pub async fn sunionstore<D, S>(&mut self, destination: D, sets: &[S]) -> Result<isize>
+    where
+        D: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
+        check_slice_not_empty!(sets);
+        let command = Command::new("SUNIONSTORE").arg(&destination).args(sets);
+        Ok(self.run_command(command).await?.unwrap_integer())
+    }
 }
