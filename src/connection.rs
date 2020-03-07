@@ -28,6 +28,14 @@ use builder::MSetBuilder;
 #[cfg(test)]
 mod test;
 
+macro_rules! check_slice_not_empty {
+    ($slice:ident) => {
+        if $slice.is_empty() {
+            return Err(Error::EmptySlice);
+        }
+    };
+}
+
 async fn read_until(r: &mut TcpStream, byte: u8) -> io::Result<Vec<u8>> {
     let mut buffer = Vec::new();
     let mut single = [0; 1];
@@ -226,12 +234,14 @@ impl Connection {
 
     ///Delete every field in `fields` from the hash set stored at `key`.
     ///# Return value
-    ///The number of deleted fields
+    ///The number of deleted fields.
     pub async fn hdel_slice<K, F>(&mut self, key: K, fields: &[F]) -> Result<isize>
     where
         K: AsRef<[u8]>,
         F: AsRef<[u8]>,
     {
+        check_slice_not_empty!(fields);
+
         self.run_command(Command::new("HDEL").arg(&key).args(&fields))
             .await
             .map(|v| v.unwrap_integer())
@@ -535,21 +545,22 @@ impl Connection {
     ///Delete `key`.
     ///# Return value
     ///The number of deleted keys.
-    pub async fn del<K>(&mut self, key: K) -> Result<isize>
+    pub async fn del<K>(&mut self, key: K) -> Result<bool>
     where
         K: AsRef<[u8]>,
     {
         let command = Command::new("DEL").arg(&key);
-        self.run_command(command).await.map(|i| i.unwrap_integer())
+        self.run_command(command).await.map(|i| i.unwrap_bool())
     }
 
     ///Delete every element in `keys`.
     ///# Return value
-    ///The number of deleted keys
+    ///The number of deleted keys.
     pub async fn del_slice<K>(&mut self, keys: &[K]) -> Result<isize>
     where
         K: AsRef<[u8]>,
     {
+        check_slice_not_empty!(keys);
         let command = Command::new("DEL").args(&keys);
         self.run_command(command).await.map(|i| i.unwrap_integer())
     }
@@ -578,12 +589,13 @@ impl Connection {
     }
 
     ///Like [`lpush`](struct.Connection.html#method.lpush), but push multiple values.
-    pub async fn lpush_slice<K, V>(&mut self, key: K, data: &[V]) -> Result<isize>
+    pub async fn lpush_slice<K, V>(&mut self, key: K, values: &[V]) -> Result<isize>
     where
         K: AsRef<[u8]>,
         V: AsRef<[u8]>,
     {
-        let command = Command::new("LPUSH").arg(&key).args(data);
+        check_slice_not_empty!(values);
+        let command = Command::new("LPUSH").arg(&key).args(values);
 
         Ok(self.run_command(command).await?.unwrap_integer())
     }
@@ -607,6 +619,7 @@ impl Connection {
         K: AsRef<[u8]>,
         V: AsRef<[u8]>,
     {
+        check_slice_not_empty!(values);
         let command = Command::new("RPUSH").arg(&key).args(values);
 
         Ok(self.run_command(command).await?.unwrap_integer())
@@ -886,14 +899,14 @@ where {
     }
 
     ///Adds new `value` to set specified by `key`.
-    pub async fn sadd<K, V>(&mut self, key: K, value: V) -> Result<isize>
+    pub async fn sadd<K, V>(&mut self, key: K, value: V) -> Result<bool>
     where
         K: AsRef<[u8]>,
         V: AsRef<[u8]>,
     {
         let command = Command::new("SADD").arg(&key).arg(&value);
 
-        Ok(self.run_command(command).await?.unwrap_integer())
+        Ok(self.run_command(command).await?.unwrap_bool())
     }
 
     ///Like [`sadd`](struct.Connection.html#method.sadd), but push multiple values.
@@ -931,7 +944,7 @@ where {
     {
         let command = Command::new("SISMEMBER").arg(&key).arg(&value);
 
-        Ok(self.run_command(command).await? == Value::Integer(1))
+        Ok(self.run_command(command).await?.unwrap_bool())
     }
 
     ///Scan for elements in a set.

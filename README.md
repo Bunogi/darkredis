@@ -42,8 +42,11 @@ async fn main() -> darkredis::Result<()> {
 ## 0.7.0
 ### Breaking changes
 - Change the blpop and brpop commands to return a tuple instead an unnecesarry vector.
+- Added new error variant: EmptySlice
+- `del`, `sadd` now return `bool`.
 ### Changes
 - Properly parse nested arrays.
+- Convenience functions now return an error if a given slice is empty.
 ### Additions
 - Add support for SCAN, SSCAN and HSCAN.
 - Convenience function for the TYPE command.

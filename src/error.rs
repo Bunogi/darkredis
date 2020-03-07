@@ -16,5 +16,9 @@ quick_error! {
         RedisError(err: String) {
             display("Redis replied with error: {}", err)
         }
+        ///A command taking a slice was given an empty slice.
+        EmptySlice {
+            display("A command expecting a slice of values received an empty slice")
+        }
     }
 }
