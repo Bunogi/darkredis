@@ -1,8 +1,14 @@
 language: rust
+sudo: required
+cache: cargo
 rust:
   - nightly
   - stable
   - beta
+addons:
+  apt:
+    packages:
+      - libssl-dev
 services:
   - redis-server
 script:
@@ -12,3 +18,13 @@ jobs:
   allow_failures:
     - rust: nightly
   fast_finish: true
+before_script: |
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    cargo install cargo-tarpaulin
+  fi
+
+after_success: |
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    cargo tarpaulin --out Xml
+    bash <(curl -s https://codecov.io/bash)
+  fi
