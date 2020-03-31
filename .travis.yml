@@ -1,5 +1,4 @@
 language: rust
-sudo: required
 cache: cargo
 rust:
   - nightly
@@ -12,6 +11,7 @@ addons:
 services:
   - redis-server
 script:
+  - if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then cargo fmt -- --check; fi || exit 1
   - cargo test --workspace
   - cargo test --no-default-features --features=runtime_async_std
 jobs:
@@ -21,6 +21,7 @@ jobs:
 before_script: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     cargo install cargo-tarpaulin
+    rustup component add rustfmt
   fi
 
 after_success: |
