@@ -1,7 +1,7 @@
 //An example of how to use the `subscribe` function.
 
 use darkredis::ConnectionPool;
-use futures::StreamExt;
+use futures::TryStreamExt;
 use std::time::Duration;
 
 #[cfg(feature = "runtime_async_std")]
@@ -39,14 +39,17 @@ async fn main() {
     //Use the stream to receive the messages. For a real application you might want to spawn a task, in order
     //to always be listening for updates, so you don't miss any.
     messagestream
-        .for_each(|e| async move {
+        .try_for_each(|e| async move {
             println!(
                 "Received a message on channel '{}': {}",
                 String::from_utf8_lossy(&e.channel),
                 String::from_utf8_lossy(&e.message)
             );
+
+            Ok(())
         })
-        .await;
+        .await
+        .unwrap();
 
     //From here you could, for example, spawn a task which only listens for messages and send them along
     //in your program using channels or other methods.

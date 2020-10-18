@@ -4,7 +4,7 @@ use futures::{
     task::{Context, Poll},
     Future, FutureExt, Stream,
 };
-use std::{pin::Pin, sync::Arc};
+use std::{convert::Infallible, pin::Pin, sync::Arc};
 
 #[cfg(feature = "runtime_async_std")]
 use async_std::net::TcpStream;
@@ -89,7 +89,7 @@ impl MessageStream {
 }
 
 impl Stream for MessageStream {
-    type Item = Message;
+    type Item = std::result::Result<Message, Infallible>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         match self.inner.as_mut().poll_next(cx) {
@@ -99,7 +99,7 @@ impl Stream for MessageStream {
                 let channel = result.next().unwrap().unwrap_string();
                 let message = result.next().unwrap().unwrap_string();
                 let output = Message { channel, message };
-                Poll::Ready(Some(output))
+                Poll::Ready(Some(Ok(output)))
             }
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,
@@ -123,7 +123,7 @@ impl PMessageStream {
 }
 
 impl Stream for PMessageStream {
-    type Item = PMessage;
+    type Item = std::result::Result<PMessage, Infallible>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         match self.inner.as_mut().poll_next(cx) {
@@ -138,7 +138,7 @@ impl Stream for PMessageStream {
                     message,
                     pattern,
                 };
-                Poll::Ready(Some(output))
+                Poll::Ready(Some(Ok(output)))
             }
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,

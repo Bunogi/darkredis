@@ -110,7 +110,7 @@ async fn pubsub() {
                     },
                 ];
                 for i in 0..3 {
-                    let result = stream.next().await.unwrap();
+                    let result = stream.next().await.unwrap().unwrap();
                     assert_eq!(result, expected[i]);
                 }
             };
@@ -149,7 +149,7 @@ async fn pubsub_pattern() {
                     channel: receive_channel,
                     pattern,
                 };
-                let result = stream.next().await.unwrap();
+                let result = stream.next().await.unwrap().unwrap();
                 assert_eq!(result, expected);
             };
 
