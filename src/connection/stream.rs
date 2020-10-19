@@ -1,15 +1,14 @@
 use super::{Connection, Result, Value};
 use futures::{
-    lock::Mutex,
     task::{Context, Poll},
     Future, FutureExt, Stream,
 };
 use std::{pin::Pin, sync::Arc};
 
 #[cfg(feature = "runtime_async_std")]
-use async_std::net::TcpStream;
+use async_std::{net::TcpStream, sync::Mutex};
 #[cfg(feature = "runtime_tokio")]
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::Mutex};
 
 ///A message received from a channel.
 #[derive(Debug, Clone)]

@@ -1,10 +1,11 @@
 use crate::{Command, CommandList, DataType, Error, Result, Value};
-use futures::{future::BoxFuture, lock::Mutex, FutureExt};
+use futures::{future::BoxFuture, FutureExt};
 
 #[cfg(feature = "runtime_async_std")]
 use async_std::{
     io,
     net::{TcpStream, ToSocketAddrs},
+    sync::Mutex,
 };
 #[cfg(feature = "runtime_async_std")]
 use futures::{AsyncReadExt, AsyncWriteExt};
@@ -13,6 +14,7 @@ use futures::{AsyncReadExt, AsyncWriteExt};
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt},
     net::{TcpStream, ToSocketAddrs},
+    sync::Mutex,
 };
 
 use std::sync::Arc;

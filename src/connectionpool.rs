@@ -1,6 +1,11 @@
 use crate::{Command, Connection, Result};
-use futures::lock::{Mutex, MutexGuard};
+use futures::stream::StreamExt;
 use std::sync::Arc;
+
+#[cfg(feature = "runtime_async_std")]
+use async_std::sync::{Mutex, MutexGuard};
+#[cfg(feature = "runtime_tokio")]
+use tokio::sync::{Mutex, MutexGuard};
 
 ///A connection pool. Clones are cheap and is the expected way to send the pool around your application.
 #[derive(Clone, Debug)]
@@ -63,14 +68,24 @@ impl ConnectionPool {
     ///available.
     pub async fn get(&self) -> MutexGuard<'_, Connection> {
         for conn in self.connections.iter() {
-            if let Some(lock) = conn.try_lock() {
-                return lock;
+            #[cfg(feature = "runtime_tokio")]
+            {
+                if let Ok(lock) = conn.try_lock() {
+                    return lock;
+                }
+            }
+            #[cfg(feature = "runtime_async_std")]
+            {
+                if let Some(lock) = conn.try_lock() {
+                    return lock;
+                }
             }
         }
 
         //No free connections found, get the first available one
-        let lockers = self.connections.iter().map(|l| l.lock());
-        futures::future::select_all(lockers).await.0
+        let mut lockers: futures::stream::FuturesUnordered<_> =
+            self.connections.iter().map(|l| l.lock()).collect();
+        lockers.next().await.unwrap()
     }
 
     ///Create a new, owned connection using the settings of the current pool. Useful for subscribers or blocking operations that may not yield a value for a long time.
@@ -127,6 +142,29 @@ mod test {
         assert_eq!(
             conn.run_command(command).await.unwrap(),
             Value::String("darkredis-named".to_string().into_bytes())
+        );
+    }
+
+    #[cfg_attr(feature = "runtime_tokio", tokio::test)]
+    #[cfg_attr(feature = "runtime_async_std", async_std::test)]
+    async fn timeout() {
+        let pool = ConnectionPool::create(crate::test::TEST_ADDRESS.into(), None, 1)
+            .await
+            .unwrap();
+
+        let mut _conn = pool.get().await;
+
+        #[cfg(feature = "runtime_tokio")]
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_millis(100), pool.get())
+                .await
+                .is_err()
+        );
+        #[cfg(feature = "runtime_async_std")]
+        assert!(
+            async_std::future::timeout(std::time::Duration::from_millis(100), pool.get())
+                .await
+                .is_err()
         );
     }
 }
