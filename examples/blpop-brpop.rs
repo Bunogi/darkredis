@@ -47,7 +47,7 @@ async fn main() -> darkredis::Result<()> {
         for (list, val) in msgs.iter() {
             println!("rpush: {} -> {}", val, list);
             conn.rpush(list, val).await.unwrap();
-            tokio::time::delay_for(step).await;
+            tokio::time::sleep(step).await;
         }
     });
     blpop(conn.clone()).await?;
