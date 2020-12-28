@@ -4,9 +4,10 @@
 
 use async_trait::async_trait;
 use darkredis::{Command, Connection, Error, ToSocketAddrs};
+use deadpool::managed as pool;
 
 ///The connection pool type for Darkredis. See the Deadpool documentation for more information.
-pub type Pool = deadpool::Pool<Connection, Error>;
+pub type Pool = pool::Pool<Connection, Error>;
 
 ///The struct which manages the state necesarry for creating and re-using connections.
 pub struct Manager<A: ToSocketAddrs + Send + Sync> {
@@ -46,7 +47,7 @@ impl<A: ToSocketAddrs + Send + Sync> Manager<A> {
 }
 
 #[async_trait]
-impl<A: ToSocketAddrs + Send + Sync> deadpool::Manager<Connection, Error> for Manager<A> {
+impl<A: ToSocketAddrs + Send + Sync> pool::Manager<Connection, Error> for Manager<A> {
     async fn create(&self) -> Result<Connection, Error> {
         let mut conn = if let Some(ref pass) = self.password {
             Connection::connect_and_auth(&self.address, pass).await?
@@ -60,10 +61,10 @@ impl<A: ToSocketAddrs + Send + Sync> deadpool::Manager<Connection, Error> for Ma
         Ok(conn)
     }
 
-    async fn recycle(&self, conn: &mut Connection) -> deadpool::RecycleResult<Error> {
+    async fn recycle(&self, conn: &mut Connection) -> pool::RecycleResult<Error> {
         match conn.ping().await {
             Ok(()) => Ok(()),
-            Err(e) => Err(deadpool::RecycleError::Backend(e)),
+            Err(e) => Err(pool::RecycleError::Backend(e)),
         }
     }
 }

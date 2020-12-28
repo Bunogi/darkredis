@@ -8,6 +8,6 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1.21"
-deadpool = "0.4.3"
-darkredis = { path = "../", version = "0.8.0-dev", default-features = false }
+async-trait = "0.1.42"
+deadpool = "0.7.0"
+darkredis = { path = "../", version = "0.8.1-dev", default-features = false }
