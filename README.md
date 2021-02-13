@@ -1,12 +1,12 @@
 # darkredis : A Redis client based on `std::future` and `async_await`
 [![Documentation](https://docs.rs/darkredis/badge.svg)](https://docs.rs/darkredis) [![Build Status](https://travis-ci.org/Bunogi/darkredis.svg?branch=master)](https://travis-ci.org/Bunogi/darkredis) [![Crates.io Status](https://img.shields.io/crates/v/darkredis.svg)](https://crates.io/crates/darkredis)
 
-
-
-
 `darkredis` is a Redis client for Rust written using the new `std::future` and `async_await`. It's designed to be easy to use, and lacks advanced features. Requires rust 1.39.0 or newer.
 
 Currently not all Redis commands have convenience functions, and there may be ergonomic improvements to make.
+
+## NOTE
+As of version 0.8.0, darkredis is no longer maintained.
 
 ## Why?
 When `darkredis` was originally written, it was part of an async project. At the time, there was no real way to use `.await` with redis-rs, so I set out to change that. The result is `darkredis`, and it has worked very well for my own personal use, which it might for you too. It's designed to be as simple as possible, serving as an easy way to call redis commands.
@@ -41,6 +41,13 @@ async fn main() -> darkredis::Result<()> {
 ```
 
 # Changelog
+## 0.8.0
+### Breaking changes
+- Update tokio to 1.0
+- Update dependencies
+- Move away from futures mutexes to async-std/tokio mutexes.
+### NOTE:
+This is likely to be the last release. Don't expect any updates.
 ## 0.7.0
 ### Breaking changes
 - Change the blpop and brpop commands to return a tuple instead an unnecesarry vector.
