@@ -10,4 +10,4 @@ publish = false
 [dependencies]
 async-trait = "0.1.42"
 deadpool = "0.7.0"
-darkredis = { path = "../", version = "0.8.1-dev", default-features = false }
+darkredis = { path = "../", version = "0.8.0", default-features = false }
